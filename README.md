@@ -105,6 +105,8 @@ If you ever need help understanding how this project works, simply copy the foll
 
 For developers, contributors, and AI agents analyzing this repository, refer to the general documentation to understand context of the project:
 
+| File | Purpose |
+|------|---------|
 | [`tutorial/TUTORIAL.md`](tutorial/TUTORIAL.md) | Hands-on guide: generating reports with AI |
 | [`context/introduction.md`](context/introduction.md) | Project introduction, quick start, and onboarding |
 | [`context/ARCHITECTURE.md`](context/ARCHITECTURE.md) | System architecture and data flow |
