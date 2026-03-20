@@ -72,6 +72,9 @@ class FailSafeSaver:
         """
         output_path = Path(output_path)
         
+        # Ensure the parent directory exists
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        
         # Attempt normal save with retries
         for attempt in range(self._max_retries + 1):
             try:
