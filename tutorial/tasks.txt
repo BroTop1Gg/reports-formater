@@ -1,0 +1,19 @@
+# Python Basics - Task List
+
+Task 1: Demonstrate numerical data types
+Write a program that shows three types of numbers in Python: Integers, Floats (decimal numbers), and Complex numbers. Print their values and types.
+
+Task 2: Basic math operations
+Create a script that performs addition, subtraction, multiplication, division, floor division (//), modulo (%), and exponentiation (**). Show the results.
+
+Task 3: String manipulation
+Write a program that joins two strings together (concatenation) and then extracts a part of the string (substring) using slicing.
+
+Task 4: Display current date
+Use the 'time' module to print the current date and time in a professional format like: "Sun May 29 02:26:23 IST 2017".
+
+Task 5: Working with lists
+Create a list of your favorite fruits. Add a new fruit to the list and remove one existing fruit. Print the list after each change.
+
+Task 6: Using tuples
+Create a tuple with four different data types (e.g., a string, a number, and a boolean). Access one item by index and unpack the tuple into separate variables.

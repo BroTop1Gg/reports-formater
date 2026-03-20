@@ -1,0 +1,7 @@
+The list of title parameters. Needed to AI who will make report using this title.
+On creating new title you can give any name to placeholders using template {{PLACEHOLDER_NAME}} or {{placeholder_name}}.
+WARNING: Placeholder name must be only lower or only upper case. Not mixed!
+
+VERSION - version of report.
+USER_NAME - author of report.
+CURRENT_YEAR - current year when report test was runnned.

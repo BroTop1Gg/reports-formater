@@ -1,0 +1,13 @@
+# Project TODOs
+
+[?] 1. Fix problem with tabs in Libre Office (all inserted in report.yaml continous into full line). Can't repeat that bug again.
+[ ] 2. Fix one-space-problem (title).
+[+] 3. Clean project from garbage (old tests, etc.)
+[+] 4. Make a few changes in code (eg. magic numbers, etc.)
+[+] 5. Check prompts.
+[ ] 6. Make testing with LLM of project usability.
+[ ] 7. Check what i can do with placeholders and empty spaces in title.
+[ ] 8. DONT FORGET TO CLEAN HISTORY!!!
+[ ] 9. Do tables works to not throw captions on the next page? Idk.
+[ ] 10. Fix issue with table_renderer.
+[ ] 11. 

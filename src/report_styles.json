@@ -1,0 +1,151 @@
+{
+  "page_setup": {
+    "margin_top_cm": 2.0,
+    "margin_bottom_cm": 2.0,
+    "margin_left_cm": 2.5,
+    "margin_right_cm": 1.5,
+    "header_distance_cm": 1.25,
+    "footer_distance_cm": 1.25
+  },
+  "fonts": {
+    "default_name": "Times New Roman",
+    "code_name": "Consolas"
+  },
+  "styles": {
+    "normal": {
+      "font_name": "Times New Roman",
+      "font_size_pt": 14,
+      "line_spacing": 1.5,
+      "first_line_indent_cm": 1.25,
+      "space_before_pt": 0,
+      "space_after_pt": 0,
+      "alignment": "justify"
+    },
+    "code_block": {
+      "font_name": "Consolas",
+      "font_size_pt": 12,
+      "line_spacing": 1.0,
+      "first_line_indent_cm": 0,
+      "space_before_pt": 0,
+      "space_after_pt": 0,
+      "alignment": "left"
+    },
+    "inline_code": {
+      "font_name": "Consolas",
+      "font_size_pt": 12
+    },
+    "heading_base": {
+      "font_name": "Times New Roman",
+      "font_size_pt": 14,
+      "bold": true,
+      "space_before_pt": 0,
+      "space_after_pt": 0,
+      "alignment": "center",
+      "first_line_indent_cm": 0
+    },
+    "heading_1": {
+      "font_name": "Times New Roman",
+      "font_size_pt": 14,
+      "bold": true,
+      "space_before_pt": 0,
+      "space_after_pt": 0,
+      "alignment": "center",
+      "first_line_indent_cm": 0
+    },
+    "heading_2": {
+      "font_name": "Times New Roman",
+      "font_size_pt": 14,
+      "bold": true,
+      "space_before_pt": 0,
+      "space_after_pt": 0,
+      "alignment": "left",
+      "_alignment_note": "DSTU 3008-15 requires center, but left is preferred for now.",
+      "first_line_indent_cm": 1.25
+    },
+    "list_item": {
+      "font_name": "Times New Roman",
+      "font_size_pt": 14,
+      "line_spacing": 1.5,
+      "space_before_pt": 0,
+      "space_after_pt": 0,
+      "alignment": "justify",
+      "left_indent_cm": 2.25,
+      "first_line_indent_cm": 0,
+      "list_level_step_cm": 1.0,
+      "list_prefix_width_cm": 0.75
+    },
+    "caption": {
+      "font_name": "Times New Roman",
+      "font_size_pt": 14,
+      "line_spacing": 1.5,
+      "first_line_indent_cm": 1.25,
+      "space_before_pt": 0,
+      "space_after_pt": 0,
+      "alignment": "left"
+    },
+    "header_footer": {
+      "font_name": "Times New Roman",
+      "font_size_pt": 12,
+      "alignment": "right",
+      "space_before_pt": 0,
+      "space_after_pt": 0
+    }
+  },
+  "page_numbering": {
+    "enabled": false,
+    "position": "header",
+    "alignment": "right",
+    "font_size_pt": 12
+  },
+  "spacing_rules": {
+    "_comment_skip_rules": "skip_if_first: Do not insert empty line before element if it is absolute first on the page or in document context. skip_if_last: Do not insert after space if it's the last element.",
+    "heading": {
+      "before": 1,
+      "after": 0,
+      "skip_if_first": true,
+      "skip_if_last": false
+    },
+    "heading_1": {
+      "before": 1,
+      "after": 0,
+      "skip_if_first": true,
+      "skip_if_last": false
+    },
+    "heading_2": {
+      "before": 1,
+      "after": 0,
+      "skip_if_first": false,
+      "skip_if_last": false
+    },
+    "heading_3": {
+      "before": 1,
+      "after": 0,
+      "skip_if_first": false,
+      "skip_if_last": false
+    },
+    "image": {
+      "before": 1,
+      "after": 1,
+      "skip_if_first": false,
+      "skip_if_last": false
+    },
+    "code": {
+      "before": 1,
+      "after": 1,
+      "skip_if_first": false,
+      "skip_if_last": false
+    },
+    "table": {
+      "before": 1,
+      "after": 1,
+      "skip_if_first": false,
+      "skip_if_last": false
+    },
+    "formula": {
+      "before": 1,
+      "after": 1,
+      "skip_if_first": false,
+      "skip_if_last": false
+    }
+  }
+}

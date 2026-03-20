@@ -1,0 +1,4 @@
+python-docx
+PyYAML
+pytest
+matplotlib

@@ -1,0 +1,334 @@
+# ============================================================
+# REPORTS-FORMATER FUNCTIONALITY TEST  
+# Version: WITHOUT Title Page, WITH Header/Footer
+# ============================================================
+# This test file validates ALL features of reports-formater.
+# Each section clearly identifies what is being tested.
+# IMPORTANT: If new features are added to reports-formater, update this test file to include them. And dont forget add same feature testing to test_with_title.yaml and test_title_and_numbering.yaml!
+
+# NO metadata (no title page)
+
+# Page numbering enabled - should show page numbers in footer
+page_numbering: true
+header_text: "Reports-Formater Test Document"
+
+
+content:
+  # TEST 1: HEADINGS
+  - type: heading
+    level: 1
+    text: "TEST 1: HEADING LEVEL 1"
+
+  - type: paragraph
+    text: "This section tests heading rendering."
+
+  - type: heading
+    level: 2
+    text: "1.1 Heading Level 2"
+
+  - type: paragraph
+    text: "This section tests heading rendering."
+
+
+  # TEST 2: PARAGRAPH FORMATTING
+  - type: heading
+    level: 1
+    text: "TEST 2: PARAGRAPHS"
+
+  - type: paragraph
+    text: "This is a standard paragraph with default formatting. It should have proper margins, line spacing, and first-line indent according to report_styles.json."
+
+  - type: heading
+    level: 2
+    text: "2.1 Inline Formatting"
+
+  - type: paragraph
+    text: "Testing **BOLD text** - these words should appear bold."
+
+  - type: paragraph
+    text: "Testing *ITALIC text* - these words should appear italic."
+
+  - type: paragraph
+    text: "Testing `INLINE CODE` - these words should appear in monospace font (Consolas)."
+
+  - type: paragraph
+    text: "Testing **mixed** formatting: *italic*, `code`, and **bold** in one paragraph."
+
+  - type: heading
+    level: 2
+    text: "2.2 Paragraph Alignment"
+
+  - type: paragraph
+    text: "ALIGNMENT: LEFT - This paragraph should be aligned to the left edge."
+    align: left
+
+  - type: paragraph
+    text: "ALIGNMENT: CENTER - This paragraph should be centered."
+    align: center
+
+  - type: paragraph
+    text: "ALIGNMENT: RIGHT - This paragraph should be aligned to the right edge."
+    align: right
+
+  - type: paragraph
+    text: "ALIGNMENT: JUSTIFY - This paragraph should be justified (both edges aligned). Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore."
+    align: justify
+
+
+
+  # TEST 3: LISTS
+  - type: heading
+    level: 1
+    text: "TEST 3: LISTS"
+
+  - type: heading
+    level: 2
+    text: "3.1 Bullet List"
+
+  - type: paragraph
+    text: "The following should display as a bulleted list with dash (–) prefix:"
+
+  - type: list
+    style: bullet
+    items:
+      - "First bullet item"
+      - "Second bullet item with **bold** text"
+      - "Third bullet item with `inline code`"
+
+  - type: heading
+    level: 2
+    text: "3.2 Numbered List"
+
+  - type: paragraph
+    text: "The following should display as 1. 2. 3. numbered list:"
+
+  - type: list
+    style: numbered
+    items:
+      - "First numbered item"
+      - "Second numbered item"
+      - "Third numbered item"
+      - "Fourth numbered item"
+
+  - type: heading
+    level: 2
+    text: "3.3 Cyrillic Alpha List"
+
+  - type: paragraph
+    text: "The following should display with Cyrillic letters а) б) в) etc.:"
+
+  - type: list
+    style: alpha_cyrillic
+    items:
+      - "Alpha item a)"
+      - "Alpha item b)"
+      - "Alpha item c)\nSecond paragraph inside alpha item c)"
+  
+  - type: heading
+    level: 2
+    text: "3.4 Latin Alpha List"
+
+  - type: paragraph
+    text: "The following should display with Latin letters a. b. c. etc.:"
+
+  - type: list
+    style: alpha_latin
+    items:
+      - "Latin item a."
+      - "Latin item b."
+      - "Latin item c."
+  
+  # Add testing nested lists.
+
+
+
+
+
+  # TEST 4: TABLES
+  - type: heading
+    level: 1
+    text: "TEST 4: TABLES"
+
+  - type: table
+    caption: "Table 1 – Simple test table (first row should repeat on page break):"
+    rows:
+      - ["Column A", "Column B", "Column C"]
+      - ["Row 1 Cell 1\nLine 2", "Row 1 Cell 2", "Row 1 Cell 3"]
+      - ["Row 2 Cell 1", "Row 2 **Bold**", "Row 2 `Code`"]
+      - ["Row 3 Cell 1", "Row 3 Cell 2", "Row 3 Cell 3"]
+
+
+
+  # TEST 5: CODE BLOCKS
+  - type: heading
+    level: 1
+    text: "TEST 5: CODE BLOCKS"
+
+  - type: paragraph
+    text: "The following should display as monospace code block:"
+
+  - type: code
+    caption: "Listing 1 – Python function example"
+    code: |
+      def test_function(arg1, arg2):
+          """Test docstring."""
+          result = arg1 + arg2
+          print(f"Result: {result}")
+          return result
+
+
+  - type: code
+    caption: "Listing 2 – QuickSort (C language)"
+    code: |
+      #include <stdio.h>
+
+      void swap(int* a, int* b) {
+          int t = *a;
+          *a = *b;
+          *b = t;
+      }
+
+      int partition(int arr[], int low, int high) {
+          int pivot = arr[high];
+          int i = (low - 1);
+      
+          for (int j = low; j <= high - 1; j++) {
+              if (arr[j] < pivot) {
+                  i++;
+                  swap(&arr[i], &arr[j]);
+              }
+          }
+          swap(&arr[i + 1], &arr[high]);
+          return (i + 1);
+      }
+
+      void quickSort(int arr[], int low, int high) {
+          if (low < high) {
+              int pi = partition(arr, low, high);
+              quickSort(arr, low, pi - 1);
+              quickSort(arr, pi + 1, high);
+          }
+      }
+
+      void printArray(int arr[], int size) {
+          for (int i = 0; i < size; i++)
+              printf("%d ", arr[i]);
+          printf("\n");
+      }
+
+      int main() {
+          int arr[] = {10, 7, 8, 9, 1, 5};
+          int n = sizeof(arr) / sizeof(arr[0]);
+          quickSort(arr, 0, n - 1);
+          printf("Sorted array: \n");
+          printArray(arr, n);
+          return 0;
+      }
+
+
+  - type: code
+    caption: "Listing 3 – Native File Embedding (Relative Path)"
+    path: "sample_code.cs" # Also can be abosulte but i prefer relative path for portability.
+
+
+  # TEST 6: IMAGES
+  - type: heading
+    level: 1
+    text: "TEST 6: IMAGES"
+
+  - type: paragraph
+    text: "The following should display an image centered with caption below:"
+
+  - type: image
+    path: "assets/test_image.png"
+    width_cm: 10
+    align: center
+    caption: "Figure 1 – Test image (should be visible and centered)"
+
+
+
+  - type: image
+    path: "assets/test_image.png"
+    # No width specified -> should auto-size to ~16.5cm
+    align: center
+    caption: "Figure 2 – Auto-sized image with caption below"
+
+
+  - type: image
+    path: "assets/test_image.png"
+    placeholder: true
+    align: center
+    caption: "Figure 3 – Intentional Image Placeholder (placeholder: true)"
+
+
+  - type: image
+    path: "assets/this_file_does_not_exist.png"
+    align: center
+    caption: "Figure 4 – Missing Image Error Placeholder"
+
+
+  - type: break
+    style: line
+    count: 1
+
+  # TEST 7: FORMULA
+  - type: heading
+    level: 2
+    text: "Formula Test"
+  
+  - type: paragraph
+    text: "Here is a simple formula rendered via matplotlib:"
+
+  - type: formula
+    content: "E = mc^2"
+    caption: "(1.1)"
+
+  - type: paragraph
+    text: "And a more complex one:"
+
+  - type: formula
+    content: "x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}"
+    align: center
+    caption: "(1.2)"
+
+
+  - type: paragraph
+    text: "Simle system-formula:"
+
+  - type: formula
+    # Matplotlib's internal engine fails on 'cases', triggering fallback.
+    content: "f(x) = \\begin{cases} x^2, & \\text{if } x < 0 \\\\ \\ln(x), & \\text{if } x \\ge 0 \\end{cases}"
+    align: center
+    caption: "(1.2)"
+
+  - type: paragraph
+    text: "Heavy Math (Maxwell's Equations - Differential Form):"
+
+  - type: formula
+    # Tests generic complex symbols (nabla, partial derivatives, vectors)
+    content: "\\begin{cases} \\nabla \\cdot \\mathbf{E} &= \\frac{\\rho}{\\varepsilon_0} \\\\ \\nabla \\cdot \\mathbf{B} &= 0 \\\\ \\nabla \\times \\mathbf{E} &= -\\frac{\\partial \\mathbf{B}}{\\partial t} \\\\ \\nabla \\times \\mathbf{B} &= \\mu_0\\mathbf{J} + \\mu_0\\varepsilon_0\\frac{\\partial \\mathbf{E}}{\\partial t} \\end{cases}"
+    align: center
+    caption: "(1.3)"
+
+
+
+  # TEST 8: MULTI-PARAGRAPH SUPPORT
+  - type: heading
+    level: 1
+    text: "TEST 8: MULTI-PARAGRAPH SUPPORT"
+
+  - type: paragraph
+    text: "This paragraph node contains a newline.\nThis should be rendered as a SEPARATE paragraph in Word, with its own spacing and indents."
+    align: justify
+
+  - type: paragraph
+    text: "Testing triple newlines:\n\n\nThis should result in two empty paragraphs between these lines."
+    align: center
+
+  # TEST END: SUMMARY
+  - type: heading
+    level: 1
+    text: "TEST SUMMARY"
+
+  - type: paragraph
+    text: "If you can read this document correctly with all elements above visible, the test has PASSED. Check each section visually to confirm proper formatting."
