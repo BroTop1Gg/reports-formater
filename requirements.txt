@@ -2,3 +2,4 @@ python-docx
 PyYAML
 pytest
 matplotlib
+pydantic
