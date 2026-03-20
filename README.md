@@ -37,6 +37,13 @@ By using this tool, CLI-Agents (such as Qwen, Gemini, etc.) can generate technic
 - **Formula Rendering:** Advanced mathematical formulas using a two-tier hybrid system (Matplotlib + System LaTeX).
 - **Template Support:** Use `.docx` templates with placeholders (e.g., `{{TITLE}}`, `{{AUTHOR}}`) to automatically generate complex title pages.
 
+### Compatibility Note
+The generated `.docx` files use advanced OXML structures.
+
+- **Looks good in:** LibreOffice Writer, Google Docs.
+- **Looks weird in:** MS Word (Online) - known bugs with tables and headers.
+- **Not tested in:** MS Word (Desktop)
+
 ## Installation
 
 ### Dependencies
