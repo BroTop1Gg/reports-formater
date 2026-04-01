@@ -9,4 +9,5 @@
 # 2. Do you see an error like this?
 #    "ERROR - Failed to parse YAML: while scanning an alias"
 #    This happens if the AI used asterisks (*) instead of 
-#    dashes (-) for lists. Please replace them with dashes manually.
+#    dashes (-) for lists. Or if you copy full massage 
+#    with ```yaml wrapper.
