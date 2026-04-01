@@ -113,6 +113,7 @@ class ImageRenderer(BaseRenderer):
         
         p_img.alignment = ALIGNMENT_MAP.get(data.align, WD_ALIGN_PARAGRAPH.CENTER)
         p_img.paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
+        p_img.paragraph_format.keep_with_next = True
         
         run_img = p_img.add_run()
         
@@ -154,6 +155,7 @@ class ImageRenderer(BaseRenderer):
             p_caption.paragraph_format.space_before = Pt(0)
             p_caption.paragraph_format.space_after = Pt(0)
             p_caption.paragraph_format.first_line_indent = Pt(0)
+            p_caption.paragraph_format.keep_with_next = True
             
             parse_inline_formatting(
                 paragraph=p_caption,

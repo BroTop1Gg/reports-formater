@@ -204,6 +204,7 @@ class TableRenderer(BaseRenderer):
         pf.first_line_indent = Cm(style_config.first_line_indent_cm)
         pf.space_before = Pt(style_config.space_before_pt)
         pf.space_after = Pt(style_config.space_after_pt)
+        pf.keep_with_next = True
 
         # Reset indents to 0 unless specified otherwise to avoid inherited indents
         pf.left_indent = Pt(0)

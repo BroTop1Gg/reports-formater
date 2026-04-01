@@ -89,19 +89,20 @@ class ListRenderer(BaseRenderer):
                 # Use reduced space between sub-paragraphs of the same list item
                 pf.space_before = Pt(style_config.space_before_pt if line_idx == 0 else 0) # ?
                 pf.space_after = Pt(style_config.space_after_pt)
-                pf.left_indent = Cm(total_indent)
                 
                 if line_idx == 0:
                     # ONLY the first line of the item gets the prefix (bullet/number)
-                    prefix = self._get_prefix(style_type, i)
-                    pf.first_line_indent = Cm(-prefix_width_cm)
+                    pf.left_indent = Cm((level - 1) * step_cm)
+                    pf.first_line_indent = Cm(base_indent_cm)
                     
+                    prefix = self._get_prefix(style_type, i)
                     prefix_run = p.add_run(f"{prefix} ")
                     prefix_run.font.name = style_config.font_name or fonts.default_name
                     prefix_run.font.size = Pt(style_config.font_size_pt)
                 else:
                     # Subsequent lines are just indented to match the prefix-aligned text
-                    pf.first_line_indent = Pt(style_config.first_line_indent_cm)
+                    pf.left_indent = Cm((level - 1) * step_cm)
+                    pf.first_line_indent = Cm(0)
                 
                 p.alignment = get_alignment_enum(style_config.alignment)
                 
