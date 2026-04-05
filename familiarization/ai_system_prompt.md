@@ -101,6 +101,7 @@ content:
   - type: image
     path: "images/screenshot.png"
     align: center
+    fit_to_page: true # CRITICAL: ALWAYS use fit_to_page: true to ensure tall images don't exceed the bottom edge of the page.
     width_cm: 17.0 # MUST use 17.0 for console/terminal/interface screenshots to ensure readability (17 is [WIDTH OF PAGE - (RIGHT MARGIN + LEFT MARGIN), to make image size of full page]).
     caption: "Рисунок 1.1 — Головне вікно" # Caption is a property of the image
 
@@ -240,3 +241,5 @@ When generating `report.yaml`, you MUST adhere to these rules:
     *   If an image file is missing and no placeholder flag is set, the engine generates a red placeholder error block.
 3.  **WHEN IN DOUBT (CRITICAL RULE)**:
     *   If you are ever unsure about the correct YAML syntax or how to structure a specific element (like numbering, headings, breaks, formulas, title injecting), **YOU MUST** look at the files in `tests/input/` (e.g., `test_with_title.yaml`, `test_without_title.yaml`) for reference. They contain the canonical, correct structure. If you dont have access to these files then request access from the user.
+4.  **Fit to Page (CRITICAL FOR IMAGES)**:
+    *   ALWAYS add `fit_to_page: true` to every `type: image` node. This prevents tall images (such as terminal output logs or long plots) from stretching past the bottom edge of the A4 page layout and breaking the document formatting.
