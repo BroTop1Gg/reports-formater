@@ -40,6 +40,7 @@ class PageSetupConfig(BaseModel):
     margin_right_cm: float = Field(default=1.5, description="Right margin in cm")
     header_distance_cm: float = Field(default=1.25, description="Distance from top of page to header")
     footer_distance_cm: float = Field(default=1.25, description="Distance from bottom of page to footer")
+    image_fit_padding_cm: float = Field(default=0, description="Vertical padding/reserve subtracted from page height when fit_to_page is active")
 
 
 class FontConfig(BaseModel):

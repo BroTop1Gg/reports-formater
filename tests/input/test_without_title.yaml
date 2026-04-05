@@ -266,6 +266,11 @@ content:
     align: center
     caption: "Figure 4 – Missing Image Error Placeholder"
 
+  - type: image
+    path: "assets/tall_lorem.png"
+    fit_to_page: true
+    align: center
+    caption: "Figure 5 – Extra tall image vertically constrained by fit_to_page"
 
   - type: break
     style: line

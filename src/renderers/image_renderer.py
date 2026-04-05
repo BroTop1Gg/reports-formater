@@ -94,6 +94,39 @@ class ImageRenderer(BaseRenderer):
             temp_file.write_bytes(image_to_insert.getvalue())
             image_to_insert = str(temp_file.resolve())
 
+        # Apply fit_to_page logic dynamically constraining target item width
+        if getattr(data, 'fit_to_page', False):
+            try:
+                from PIL import Image as PILImage
+                with PILImage.open(image_to_insert) as img:
+                    w_px, h_px = img.size
+                if h_px > 0:
+                    aspect_ratio = w_px / h_px
+                    
+                    # Determine total page height (A4 fallback is 29.7 cm)
+                    page_height_cm = 29.7
+                    try:
+                        section = context.doc.sections[0]
+                        if hasattr(section, 'page_height') and getattr(section, 'page_height') > 0:
+                            if hasattr(section.page_height, 'cm'):
+                                page_height_cm = section.page_height.cm
+                            else:
+                                page_height_cm = section.page_height / 360000.0 # 360000 EMUs per cm
+                    except Exception:
+                        pass
+                        
+                    max_height_cm = page_height_cm - page_setup.margin_top_cm - page_setup.margin_bottom_cm - page_setup.image_fit_padding_cm
+                    
+                    current_width_cm = item_width.cm if hasattr(item_width, 'cm') else item_width / 360000.0
+                    projected_height_cm = current_width_cm / aspect_ratio
+                    
+                    if projected_height_cm > max_height_cm and max_height_cm > 0:
+                        adjusted_width_cm = max_height_cm * aspect_ratio
+                        item_width = Cm(adjusted_width_cm)
+                        logger.debug(f"ImageRenderer: fit_to_page active. Adjusted width to {adjusted_width_cm:.2f}cm representing {max_height_cm:.2f}cm height.")
+            except Exception as e:
+                logger.warning(f"ImageRenderer: Failed to calculate fit_to_page constraints: {e}")
+
         # Create Layout Table
         rows = 2 if data.caption else 1
         table = context.container.add_table(rows=rows, cols=1)

@@ -5,7 +5,8 @@
     "margin_left_cm": 2.5,
     "margin_right_cm": 1.5,
     "header_distance_cm": 1.25,
-    "footer_distance_cm": 1.25
+    "footer_distance_cm": 1.25,
+    "image_fit_padding_cm": 1.50
   },
   "fonts": {
     "default_name": "Times New Roman",

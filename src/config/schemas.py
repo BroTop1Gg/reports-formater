@@ -115,6 +115,7 @@ class ImageData(ContentNode):
     align: str = Field(default="center", description="Image alignment")
     caption: Optional[str] = Field(default=None, description="Caption below image")
     placeholder: bool = Field(default=False, description="Use placeholder instead of real image")
+    fit_to_page: bool = Field(default=False, description="Scale image to fit within page height")
 
 
 # ============================================================
