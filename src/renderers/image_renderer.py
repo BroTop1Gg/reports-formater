@@ -127,16 +127,15 @@ class ImageRenderer(BaseRenderer):
             except Exception as e:
                 logger.warning(f"ImageRenderer: Failed to calculate fit_to_page constraints: {e}")
 
-        # Create Layout Table
-        rows = 2 if data.caption else 1
-        table = context.container.add_table(rows=rows, cols=1)
+        # Create Layout Table (Single row for both to avoid LibreOffice keep_with_next bugs)
+        table = context.container.add_table(rows=1, cols=1)
         table.autofit = False
         table.columns[0].width = item_width
         optimize_invisible_table(table)
         
         # Populate Image Cell (Row 0)
-        cell_img = table.cell(0, 0)
-        p_img = cell_img.paragraphs[0]
+        cell = table.cell(0, 0)
+        p_img = cell.paragraphs[0]
         # remove spacing for clean table fit
         p_img.paragraph_format.left_indent = Pt(0)
         p_img.paragraph_format.right_indent = Pt(0)
@@ -146,8 +145,6 @@ class ImageRenderer(BaseRenderer):
         
         p_img.alignment = ALIGNMENT_MAP.get(data.align, WD_ALIGN_PARAGRAPH.CENTER)
         p_img.paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
-        if data.caption:
-            p_img.paragraph_format.keep_with_next = True
         
         run_img = p_img.add_run()
         
@@ -160,15 +157,6 @@ class ImageRenderer(BaseRenderer):
                 shape = run_img.add_picture(image_to_insert, width=item_width)
                 
             # IMPORTANT: LibreOffice Custom Image Margin Fix
-            # By default, python-docx does not insert `distT`, `distB`, `distL`, `distR` 
-            # attributes on the `<wp:inline>` XML element for images.
-            # MS Word handles this gracefully, but LibreOffice Writer assumes a default 
-            # internal padding (~0.31 cm) around the image if these attributes are missing.
-            # This causes images to be cropped/clipped when placed inside tables that 
-            # restrict their width.
-            #
-            # To fix this, we MUST explicitly set these distances to "0" on the 
-            # underlying OXML element `shape._inline`.
             inline = shape._inline
             inline.set('distT', "0")
             inline.set('distB', "0")
@@ -178,10 +166,9 @@ class ImageRenderer(BaseRenderer):
             logger.error(f"ImageRenderer: Failed to insert image: {e}")
             return
             
-        # Add caption if provided (Row 1)
+        # Add caption if provided (Same Cell, next paragraph)
         if data.caption:
-            cell_caption = table.cell(1, 0)
-            p_caption = cell_caption.paragraphs[0]
+            p_caption = cell.add_paragraph()
             p_caption.alignment = WD_ALIGN_PARAGRAPH.CENTER
             
             p_caption.paragraph_format.left_indent = Pt(0)

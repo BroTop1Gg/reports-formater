@@ -48,8 +48,7 @@ class CodeBlockRenderer(BaseRenderer):
         if data.caption:
             self._render_with_table(context, data, resolved_code)
         else:
-            p = context.container.add_paragraph()
-            self._fill_code_paragraph(p, resolved_code, context)
+            self._fill_code_container(context.container, resolved_code, context, is_cell=False)
             
     def _resolve_code_content(self, context: RenderContext, data: CodeBlockData) -> str:
         """
@@ -105,7 +104,7 @@ class CodeBlockRenderer(BaseRenderer):
         
         # Row 1: Code
         cell_code = table.cell(1, 0)
-        self._fill_code_paragraph(cell_code.paragraphs[0], resolved_code, context)
+        self._fill_code_container(cell_code, resolved_code, context, is_cell=True)
 
     def _fill_caption_paragraph(self, p, data: CodeBlockData, context: RenderContext) -> None:
         """
@@ -138,25 +137,41 @@ class CodeBlockRenderer(BaseRenderer):
             base_size_pt=style_config.font_size_pt
         )
 
-    def _fill_code_paragraph(self, p, code_text: str, context: RenderContext) -> None:
-        """Fill paragraph with code content formatting."""
+    def _fill_code_container(self, container, code_text: str, context: RenderContext, is_cell: bool = False) -> None:
+        """Fill container (cell or document) with code content as multiple paragraphs."""
         fonts = context.config.fonts
         code_style = context.config.styles.code_block
         
-        pf = p.paragraph_format
-        pf.line_spacing = code_style.line_spacing
-        pf.space_before = Pt(code_style.space_before_pt)
-        pf.space_after = Pt(code_style.space_after_pt)
-        # Indents:
-        pf.first_line_indent = Pt(0)
-        pf.left_indent = Pt(0)
-        pf.right_indent = Pt(0)
-        
-        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-        
-        run = p.add_run(code_text)
-        run.font.name = code_style.font_name or fonts.code_name
-        run.font.size = Pt(code_style.font_size_pt)
+        lines = code_text.split('\n')
+        # Prevent last empty newline from creating an extra paragraph gap
+        if lines and lines[-1] == '':
+            lines = lines[:-1]
+            
+        for i, line in enumerate(lines):
+            if is_cell and i == 0:
+                p = container.paragraphs[0]
+            else:
+                p = container.add_paragraph()
+                
+            pf = p.paragraph_format
+            pf.line_spacing = code_style.line_spacing
+            
+            # Only add space_before to the VERY FIRST paragraph, and space_after to the VERY LAST
+            pf.space_before = Pt(code_style.space_before_pt) if i == 0 else Pt(0)
+            pf.space_after = Pt(code_style.space_after_pt) if i == len(lines)-1 else Pt(0)
+            
+            # Indents
+            pf.first_line_indent = Pt(0)
+            pf.left_indent = Pt(0)
+            pf.right_indent = Pt(0)
+            
+            p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+            
+            # Don't add empty run for empty line to save XML space
+            if line:
+                run = p.add_run(line)
+                run.font.name = code_style.font_name or fonts.code_name
+                run.font.size = Pt(code_style.font_size_pt)
 
     def _mark_header_row(self, row) -> None:
         """Mark row to repeat on page breaks using OXML w:tblHeader."""
