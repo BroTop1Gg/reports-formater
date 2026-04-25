@@ -163,8 +163,9 @@ def add_table_borders(table) -> None:
     if existing_borders is not None:
         tbl_pr.remove(existing_borders)
             
-    # Append the new borders definition
-    tbl_pr.append(parse_xml(borders_xml))
+    # Append the new borders definition in correct order
+    tbl_pr.insert_element_before(parse_xml(borders_xml),
+        'w:shd', 'w:tblLayout', 'w:tblCellMar', 'w:tblLook', 'w:tblCaption')
 
 
 def optimize_invisible_table(table) -> None:
@@ -193,7 +194,26 @@ def optimize_invisible_table(table) -> None:
     tblW = tblPr.find(f".//{{{W_NS}}}tblW")
     if tblW is not None:
         tblPr.remove(tblW)
-    tblPr.append(parse_xml(f'<w:tblW {nsdecls("w")} w:w="5000" w:type="pct"/>'))
+    tblPr.insert_element_before(
+        parse_xml(f'<w:tblW {nsdecls("w")} w:w="5000" w:type="pct"/>'),
+        'w:jc', 'w:tblCellSpacing', 'w:tblInd', 'w:tblBorders', 'w:shd', 'w:tblLayout', 'w:tblCellMar', 'w:tblLook', 'w:tblCaption'
+    )
+
+    # Center alignment
+    old_jc = tblPr.find(f".//{{{W_NS}}}jc")
+    if old_jc is not None: tblPr.remove(old_jc)
+    tblPr.insert_element_before(
+        parse_xml(f'<w:jc {nsdecls("w")} w:val="center"/>'),
+        'w:tblCellSpacing', 'w:tblInd', 'w:tblBorders', 'w:shd', 'w:tblLayout', 'w:tblCellMar', 'w:tblLook', 'w:tblCaption'
+    )
+
+    # Indent 0
+    old_ind = tblPr.find(f".//{{{W_NS}}}tblInd")
+    if old_ind is not None: tblPr.remove(old_ind)
+    tblPr.insert_element_before(
+        parse_xml(f'<w:tblInd {nsdecls("w")} w:w="0" w:type="dxa"/>'),
+        'w:tblBorders', 'w:shd', 'w:tblLayout', 'w:tblCellMar', 'w:tblLook', 'w:tblCaption'
+    )
 
     # Cell Margins 0 at Table level (the ONLY place LibreOffice respects this)
     old_mar = tblPr.find(f".//{{{W_NS}}}tblCellMar")
@@ -206,17 +226,7 @@ def optimize_invisible_table(table) -> None:
         f'<w:right w:w="0" w:type="dxa"/>'
         f'</w:tblCellMar>'
     )
-    tblPr.append(tblCellMar)
-
-    # Indent 0
-    old_ind = tblPr.find(f".//{{{W_NS}}}tblInd")
-    if old_ind is not None: tblPr.remove(old_ind)
-    tblPr.append(parse_xml(f'<w:tblInd {nsdecls("w")} w:w="0" w:type="dxa"/>'))
-
-    # Center alignment
-    old_jc = tblPr.find(f".//{{{W_NS}}}jc")
-    if old_jc is not None: tblPr.remove(old_jc)
-    tblPr.append(parse_xml(f'<w:jc {nsdecls("w")} w:val="center"/>'))
+    tblPr.insert_element_before(tblCellMar, 'w:tblLook', 'w:tblCaption')
 
     # --- Cell-Level Properties ---
     # Set empty tcBorders on each cell (LibreOffice pattern for borderless cells)
@@ -249,19 +259,28 @@ def optimize_table_width_and_alignment(table) -> None:
     tblW = tblPr.find(f".//{{http://schemas.openxmlformats.org/wordprocessingml/2006/main}}tblW")
     if tblW is not None:
         tblPr.remove(tblW)
-    tblPr.append(parse_xml(f'<w:tblW {nsdecls("w")} w:w="5000" w:type="pct"/>'))
-
-    # Indent 0 (to align with left margin)
-    old_ind = tblPr.find(f".//{{http://schemas.openxmlformats.org/wordprocessingml/2006/main}}tblInd")
-    if old_ind is not None: tblPr.remove(old_ind)
-    tblInd = parse_xml(f'<w:tblInd {nsdecls("w")} w:w="0" w:type="dxa"/>')
-    tblPr.append(tblInd)
+    tblPr.insert_element_before(
+        parse_xml(f'<w:tblW {nsdecls("w")} w:w="5000" w:type="pct"/>'),
+        'w:jc', 'w:tblCellSpacing', 'w:tblInd', 'w:tblBorders', 'w:shd', 'w:tblLayout', 'w:tblCellMar', 'w:tblLook', 'w:tblCaption'
+    )
 
     # Center alignment
     old_jc = tblPr.find(f".//{{http://schemas.openxmlformats.org/wordprocessingml/2006/main}}jc")
     if old_jc is not None: tblPr.remove(old_jc)
     jc = parse_xml(f'<w:jc {nsdecls("w")} w:val="center"/>')
-    tblPr.append(jc)
+    tblPr.insert_element_before(
+        jc,
+        'w:tblCellSpacing', 'w:tblInd', 'w:tblBorders', 'w:shd', 'w:tblLayout', 'w:tblCellMar', 'w:tblLook', 'w:tblCaption'
+    )
+
+    # Indent 0 (to align with left margin)
+    old_ind = tblPr.find(f".//{{http://schemas.openxmlformats.org/wordprocessingml/2006/main}}tblInd")
+    if old_ind is not None: tblPr.remove(old_ind)
+    tblInd = parse_xml(f'<w:tblInd {nsdecls("w")} w:w="0" w:type="dxa"/>')
+    tblPr.insert_element_before(
+        tblInd,
+        'w:tblBorders', 'w:shd', 'w:tblLayout', 'w:tblCellMar', 'w:tblLook', 'w:tblCaption'
+    )
 
 
 def get_alignment_enum(alignment_str: str) -> WD_ALIGN_PARAGRAPH:
