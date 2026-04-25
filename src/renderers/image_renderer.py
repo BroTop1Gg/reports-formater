@@ -20,7 +20,11 @@ from docx.enum.table import WD_ALIGN_VERTICAL
 from src.renderers.base import BaseRenderer, RenderContext
 from src.config.schemas import ImageData
 from src.utils.formatting import parse_inline_formatting
-from src.utils.docx_utils import optimize_invisible_table
+from src.utils.docx_utils import (
+    optimize_invisible_table,
+    add_table_borders,
+    fix_table_position
+)
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +98,18 @@ class ImageRenderer(BaseRenderer):
             temp_file.write_bytes(image_to_insert.getvalue())
             image_to_insert = str(temp_file.resolve())
 
+        # Determine initial insertion kwargs based on explicit user width/height or available item width
+        insert_kwargs = {}
+        if data.width_cm:
+            insert_kwargs['width'] = Cm(data.width_cm)
+            current_width_cm = data.width_cm
+        elif data.height_cm:
+            insert_kwargs['height'] = Cm(data.height_cm)
+            current_width_cm = None  # Will calculate if aspect_ratio is known
+        else:
+            insert_kwargs['width'] = item_width
+            current_width_cm = item_width.cm if hasattr(item_width, 'cm') else item_width / 360000.0
+
         # Apply fit_to_page logic dynamically constraining target item width
         if getattr(data, 'fit_to_page', False):
             try:
@@ -117,18 +133,23 @@ class ImageRenderer(BaseRenderer):
                         
                     max_height_cm = page_height_cm - page_setup.margin_top_cm - page_setup.margin_bottom_cm - page_setup.image_fit_padding_cm
                     
-                    current_width_cm = item_width.cm if hasattr(item_width, 'cm') else item_width / 360000.0
+                    if current_width_cm is None:
+                        current_width_cm = data.height_cm * aspect_ratio
+                        
                     projected_height_cm = current_width_cm / aspect_ratio
                     
                     if projected_height_cm > max_height_cm and max_height_cm > 0:
                         adjusted_width_cm = max_height_cm * aspect_ratio
                         item_width = Cm(adjusted_width_cm)
+                        # Override specific insertion kwargs because fit_to_page constraints are tighter
+                        insert_kwargs = {'width': item_width}
                         logger.debug(f"ImageRenderer: fit_to_page active. Adjusted width to {adjusted_width_cm:.2f}cm representing {max_height_cm:.2f}cm height.")
             except Exception as e:
                 logger.warning(f"ImageRenderer: Failed to calculate fit_to_page constraints: {e}")
 
         # Create Layout Table (Single row for both to avoid LibreOffice keep_with_next bugs)
         table = context.container.add_table(rows=1, cols=1)
+        fix_table_position(table)
         table.autofit = False
         table.columns[0].width = item_width
         optimize_invisible_table(table)
@@ -149,14 +170,18 @@ class ImageRenderer(BaseRenderer):
         run_img = p_img.add_run()
         
         try:
-            if data.width_cm:
-                shape = run_img.add_picture(image_to_insert, width=Cm(data.width_cm))
-            elif data.height_cm:
-                shape = run_img.add_picture(image_to_insert, height=Cm(data.height_cm))
-            else:
-                shape = run_img.add_picture(image_to_insert, width=item_width)
+            shape = run_img.add_picture(image_to_insert, **insert_kwargs)
                 
             # IMPORTANT: LibreOffice Custom Image Margin Fix
+            # By default, python-docx does not insert `distT`, `distB`, `distL`, `distR` 
+            # attributes on the `<wp:inline>` XML element for images.
+            # MS Word handles this gracefully, but LibreOffice Writer assumes a default 
+            # internal padding (~0.31 cm) around the image if these attributes are missing.
+            # This causes images to be cropped/clipped when placed inside tables that 
+            # restrict their width.
+            #
+            # To fix this, we MUST explicitly set these distances to "0" on the 
+            # underlying OXML element `shape._inline`.
             inline = shape._inline
             inline.set('distT', "0")
             inline.set('distB', "0")

@@ -56,11 +56,10 @@
     "heading_2": {
       "font_name": "Times New Roman",
       "font_size_pt": 14,
-      "bold": true,
+      "bold": false,
       "space_before_pt": 0,
       "space_after_pt": 0,
       "alignment": "left",
-      "_alignment_note": "DSTU 3008-15 requires center, but left is preferred for now.",
       "first_line_indent_cm": 1.25
     },
     "list_item": {

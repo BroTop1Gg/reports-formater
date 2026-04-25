@@ -8,15 +8,16 @@ import logging
 from typing import List, Union
 
 from docx.oxml import OxmlElement
-from docx.shared import Pt, Cm
+from docx.shared import Pt, Cm, RGBColor
+from docx.oxml.ns import qn
 
-from src.utils.docx_utils import (
-    add_table_borders,
-    optimize_table_width_and_alignment,
-    get_alignment_enum
-)
 from src.renderers.base import BaseRenderer, RenderContext
 from src.config.schemas import TableData
+from src.utils.docx_utils import (
+    optimize_table_width_and_alignment,
+    add_table_borders,
+    fix_table_position
+)
 from src.utils.formatting import parse_inline_formatting
 
 logger = logging.getLogger(__name__)
@@ -74,6 +75,7 @@ class TableRenderer(BaseRenderer):
 
         # Create table
         table = context.container.add_table(rows=num_rows, cols=num_cols)
+        fix_table_position(table)
         table.autofit = False
 
         # Determine explicit width to avoid sub-millimeter offsets in LibreOffice/Word

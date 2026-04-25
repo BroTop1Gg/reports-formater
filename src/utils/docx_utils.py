@@ -21,6 +21,24 @@ DEFAULT_ANCHOR_DIST_LR = 114300
 DEFAULT_RELATIVE_HEIGHT = 251658240
 """Default z-order index. Matches Word's auto-generated value for images."""
 
+def fix_table_position(table) -> None:
+    """
+    Fixes a bug in older versions of python-docx where `add_table()`
+    appends the table to the very end of the document body, 
+    even after the final `<w:sectPr>` tag.
+    This causes tables to cluster at the end of the document out of order.
+    """
+    tbl_elem = table._tbl
+    parent = tbl_elem.getparent()
+    if parent is not None and parent.tag.endswith('body'):
+        W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+        sectPr = parent.find(f".//{{{W_NS}}}sectPr")
+        if sectPr is not None:
+            # Check if tbl is positioned after sectPr. If so, move it before sectPr.
+            elements = list(parent)
+            if elements.index(tbl_elem) > elements.index(sectPr):
+                parent.remove(tbl_elem)
+                sectPr.addprevious(tbl_elem)
 
 def convert_inline_to_floating(
     inline_shape,

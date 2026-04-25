@@ -14,7 +14,7 @@ from pathlib import Path
 from src.renderers.base import BaseRenderer, RenderContext
 from src.config.schemas import CodeBlockData
 from src.utils.formatting import parse_inline_formatting
-from src.utils.docx_utils import optimize_invisible_table, get_alignment_enum
+from src.utils.docx_utils import optimize_invisible_table, get_alignment_enum, fix_table_position
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +82,7 @@ class CodeBlockRenderer(BaseRenderer):
     def _render_with_table(self, context: RenderContext, data: CodeBlockData, resolved_code: str) -> None:
         """Render caption and code inside a borderless 1x2 table."""
         table = context.container.add_table(rows=2, cols=1)
+        fix_table_position(table)
         table.autofit = False
         
         # Determine width

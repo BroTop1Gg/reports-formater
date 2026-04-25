@@ -3,3 +3,4 @@
 [?] 1. Fix problem with tabs in Libre Office (all inserted in report.yaml continous into full line). Can't repeat that bug again.
 [ ] 2. Fix issue with table_renderer.
 [-] 3. Fix problem with listing-in-table shift: first must be "Listing X.X ..." second "Continue of listing X.X". But this is imposible to implement without breaking redactability of docx.
+[ ] 4. Fix problem where second H1 dont have intends (top and bottom spacing lines)

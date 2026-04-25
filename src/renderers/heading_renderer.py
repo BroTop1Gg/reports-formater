@@ -66,7 +66,8 @@ class HeadingRenderer(BaseRenderer):
         for run in h.runs:
             run.font.name = style_config.font_name or fonts.default_name
             run.font.size = Pt(style_config.font_size_pt)
-            run.font.color.rgb = RGBColor(0, 0, 0)
+            # Again implict logic?
+            # run.font.color.rgb = RGBColor(0, 0, 0) # ???
             run.bold = style_config.bold
         
         # Apply paragraph formatting
@@ -74,4 +75,4 @@ class HeadingRenderer(BaseRenderer):
         pf.space_before = Pt(style_config.space_before_pt)
         pf.space_after = Pt(style_config.space_after_pt)
         pf.alignment = get_alignment_enum(style_config.alignment)
-        pf.first_line_indent = Cm(0)  # Headings never have first-line indent
+        pf.first_line_indent = Cm(style_config.first_line_indent_cm)  # HELL MAGIC NUMBERS AND IMPLICT LOGIC! NEVER DO THAT!
