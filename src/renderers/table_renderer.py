@@ -16,7 +16,8 @@ from src.config.schemas import TableData
 from src.utils.docx_utils import (
     optimize_table_width_and_alignment,
     add_table_borders,
-    fix_table_position
+    fix_table_position,
+    get_alignment_enum
 )
 from src.utils.formatting import parse_inline_formatting
 

@@ -31,7 +31,10 @@ By using this tool, CLI-Agents (such as Qwen, Gemini, etc.) can generate technic
 
 ## Features
 
-- **YAML-Driven Content:** Write your paragraphs, headings, lists, tables, code blocks, and formulas in plain text.
+- **Dual-Protocol Gateway:** Choose between YAML (structured) or Markdown (natural) input formats.
+- **MCP Integration:** Native Model Context Protocol servers for seamless AI client integration (Cursor, Claude Desktop).
+- **YAML-Driven Content:** Write your paragraphs, headings, lists, tables, code blocks, and formulas in structured YAML.
+- **Markdown-First Mode:** Write reports in natural Pandoc-style Markdown with automatic transpilation to internal AST.
 - **Strict Compliance:** Automated enforcement of heading styles, paragraph spacing, and page numbering layouts.
 - **Complex Structures:** Support for repeating table headers across pages, code block captions, and multi-level alphabetic lists.
 - **Formula Rendering:** Advanced mathematical formulas using a two-tier hybrid system (Matplotlib + System LaTeX).
@@ -98,6 +101,59 @@ To generate documents using an LLM:
 
 Or, if you using CLI-Agent, they can automatically create files and run the tool. But you also need give them instructions to do that `familiarization/ai_system_prompt.md`, `familiarization/user_guide.md`.
 
+### Dual-Protocol Gateway (MCP Integration)
+
+The project provides two Model Context Protocol (MCP) servers for seamless AI client integration:
+
+#### YAML Protocol Server
+For structured, schema-driven content generation:
+```bash
+python -m src.mcp_server_yaml
+```
+- Exposes tools: `init_report`, `submit_chunk`, `finalize_report`
+- Resource: `dstu://guidelines` (YAML schema reference)
+- Best for: Precise control over document structure
+
+#### Markdown Protocol Server
+For natural, Pandoc-style Markdown input:
+```bash
+python -m src.mcp_server_markdown
+```
+- Exposes tools: `init_report`, `submit_markdown_chunk`, `finalize_report`
+- Resource: `dstu://guidelines` (Markdown syntax reference)
+- Best for: Writing reports in natural Markdown with automatic transpilation
+
+#### Client Configuration
+
+**Cursor:**
+1. Open Settings → Features → MCP
+2. Click "Add MCP Server"
+3. Select "Command" type
+4. Name: `reports-formater-yaml` or `reports-formater-markdown`
+5. Command: `python -m src.mcp_server_yaml` or `python -m src.mcp_server_markdown`
+6. Working directory: your project root
+
+**Claude Desktop:**
+Edit `claude_desktop_config.json`:
+```json
+{
+  "mcpServers": {
+    "reports-formater-yaml": {
+      "command": "python",
+      "args": ["-m", "src.mcp_server_yaml"],
+      "cwd": "/path/to/reports-formater"
+    },
+    "reports-formater-markdown": {
+      "command": "python",
+      "args": ["-m", "src.mcp_server_markdown"],
+      "cwd": "/path/to/reports-formater"
+    }
+  }
+}
+```
+
+Both servers provide real-time validation, stateful session management, and automatic .docx generation through the MCP protocol.
+
 ## Try it Yourself (Tutorial)
 
 Want to try generate document? Check out the [`tutorial/`](tutorial/) folder for a simple step-by-step guide. It includes sample programming tasks to feed to your AI and an empty YAML file to practice with.
@@ -119,7 +175,8 @@ For developers, contributors, and AI agents analyzing this repository, refer to 
 | [`context/ARCHITECTURE.md`](context/ARCHITECTURE.md) | System architecture and data flow |
 | [`context/code_style.md`](context/code_style.md) | Coding standards and intervention protocols |
 | [`context/philosophy.md`](context/philosophy.md) | Core design principles ("Dumb Builder") and anti-patterns |
-| [`familiarization/ai_system_prompt.md`](familiarization/ai_system_prompt.md) | System prompt for LLMs to generate YAML content |
+| [`familiarization/ai_system_prompt_yaml.md`](familiarization/ai_system_prompt_yaml.md) | System prompt for LLMs to generate YAML content |
+| [`familiarization/ai_system_prompt_markdown.md`](familiarization/ai_system_prompt_markdown.md) | System prompt for LLMs to generate Markdown content |
 | [`familiarization/user_guide.md`](familiarization/user_guide.md) | Syntax guide for YAML nodes and supported features |
 | [`familiarization/DSTU_3008-15.md`](familiarization/DSTU_3008-15.md) | Extracts from the DSTU 3008-2015 standard |
 

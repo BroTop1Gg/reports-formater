@@ -36,8 +36,8 @@ class PageSetupConfig(BaseModel):
     """Page layout configuration."""
     margin_top_cm: float = Field(default=2.0, description="Top margin in cm")
     margin_bottom_cm: float = Field(default=2.0, description="Bottom margin in cm")
-    margin_left_cm: float = Field(default=3.0, description="Left margin in cm")
-    margin_right_cm: float = Field(default=1.5, description="Right margin in cm")
+    margin_left_cm: float = Field(default=2.5, description="Left margin in cm")
+    margin_right_cm: float = Field(default=1.0, description="Right margin in cm")
     header_distance_cm: float = Field(default=1.25, description="Distance from top of page to header")
     footer_distance_cm: float = Field(default=1.25, description="Distance from bottom of page to footer")
     image_fit_padding_cm: float = Field(default=0, description="Vertical padding/reserve subtracted from page height when fit_to_page is active")

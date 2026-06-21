@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "reports-formatter-yaml": {
+      "command": "/home/acer/Projects/DevelopingUtilities/reports-formater/venv/bin/python",
+      "args": [
+        "/home/acer/Projects/DevelopingUtilities/reports-formater/src/mcp_server_yaml.py"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/acer/Projects/DevelopingUtilities/reports-formater"
+      }
+    },
+    "reports-formatter-markdown": {
+      "command": "/home/acer/Projects/DevelopingUtilities/reports-formater/venv/bin/python",
+      "args": [
+        "/home/acer/Projects/DevelopingUtilities/reports-formater/src/mcp_server_markdown.py"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/acer/Projects/DevelopingUtilities/reports-formater"
+      }
+    }
+  }
+}

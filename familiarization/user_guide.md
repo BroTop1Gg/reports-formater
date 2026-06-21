@@ -1,6 +1,17 @@
-# User Guide: Reports-Formater (CLI Tool)
+# User Guide: Reports-Formater
 
-This tool automates the creation of `.docx` reports based on a YAML content file and a DOCX template. It adheres to DSTU 3008-2015 standards for Ukrainian university lab reports.
+This tool automates the creation of `.docx` reports based on YAML or Markdown content files and a DOCX template. It adheres to DSTU 3008-2015 standards for Ukrainian university lab reports.
+
+## Dual-Protocol Gateway
+
+Reports-Formater supports two input protocols:
+
+1. **YAML Protocol** - Structured, explicit format with full control over all parameters
+2. **Markdown Protocol** - Natural, readable format with automatic transpilation to internal AST
+
+Both protocols are available via:
+- **CLI** - Direct command-line execution
+- **MCP Servers** - Model Context Protocol integration for AI agents (Cursor, Claude Desktop, etc.)
 
 ## 1. Installation
 
