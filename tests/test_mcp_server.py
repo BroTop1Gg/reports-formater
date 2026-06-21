@@ -192,8 +192,8 @@ class TestMCPToolFunctions(unittest.TestCase):
         self.assertIsInstance(content, str)
         self.assertGreater(len(content), 0)
         
-        # Should contain DSTU reference
-        self.assertIn("DSTU", content)
+        # Should contain DSTU reference (Ukrainian Cyrillic version)
+        self.assertIn("ДСТУ", content)
 
 
 class TestMCPToolValidation(unittest.TestCase):
