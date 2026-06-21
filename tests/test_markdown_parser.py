@@ -1,372 +1,430 @@
+#!/usr/bin/env python3
 """
-Unit tests for Markdown Transpiler Bridge (markdown_parser.py).
+Unit tests for the refactored markdown_parser.py (Natural Syntax with Smart Defaults).
 
-Tests all regex-parsing patterns and node generation for Pandoc-style
-academic Markdown elements.
+Tests the new behavior:
+- Smart Defaults (paragraphs, formulas, images, tables)
+- Smart Caption Absorption (code blocks and tables)
+- Natural image placeholders
+- LaTeX formulas with optional captions
+- Line breaks and page breaks
 """
 
 import pytest
-from src.sdk.markdown_parser import (
-    parse_markdown_to_nodes,
-    parse_attributes,
-    _convert_value,
-)
+from pathlib import Path
+from src.sdk.markdown_parser import parse_markdown_to_nodes
 
 
-class TestAttributeParsing:
-    """Test attribute parsing from key=value strings."""
+class TestSmartDefaults:
+    """Test Smart Defaults behavior."""
 
-    def test_parse_simple_string_attribute(self):
-        """Parse unquoted string value."""
-        result = parse_attributes('caption="Listing 1.1"')
-        assert result == {"caption": "Listing 1.1"}
-
-    def test_parse_quoted_string_with_spaces(self):
-        """Parse quoted string with spaces."""
-        result = parse_attributes('path="src/file.py"')
-        assert result == {"path": "src/file.py"}
-
-    def test_parse_float_attribute(self):
-        """Parse float value."""
-        result = parse_attributes('width=10.5')
-        assert result == {"width": 10.5}
-
-    def test_parse_integer_attribute(self):
-        """Parse integer value."""
-        result = parse_attributes('level=3')
-        assert result == {"level": 3}
-
-    def test_parse_boolean_true(self):
-        """Parse boolean true."""
-        result = parse_attributes('fit_to_page=true')
-        assert result == {"fit_to_page": True}
-
-    def test_parse_boolean_false(self):
-        """Parse boolean false."""
-        result = parse_attributes('placeholder=false')
-        assert result == {"placeholder": False}
-
-    def test_parse_multiple_attributes(self):
-        """Parse multiple attributes in one string."""
-        result = parse_attributes('width=17.0 fit_to_page=true caption="Рисунок 1.1"')
-        assert result == {
-            "width": 17.0,
-            "fit_to_page": True,
-            "caption": "Рисунок 1.1"
-        }
-
-    def test_parse_empty_string(self):
-        """Parse empty attribute string."""
-        result = parse_attributes('')
-        assert result == {}
-
-
-class TestHeadingParsing:
-    """Test heading parsing."""
-
-    def test_parse_level_1_heading(self):
-        """Parse level 1 heading."""
-        md = "# ВСТУП"
+    def test_paragraph_default_justify(self):
+        """Paragraphs should default to align='justify'."""
+        md = "Це звичайний абзац тексту."
         nodes = parse_markdown_to_nodes(md)
         assert len(nodes) == 1
-        assert nodes[0] == {"type": "heading", "level": 1, "text": "ВСТУП"}
+        assert nodes[0]["type"] == "paragraph"
+        assert nodes[0]["text"] == "Це звичайний абзац тексту."
+        assert nodes[0]["align"] == "justify"
 
-    def test_parse_level_2_heading(self):
-        """Parse level 2 heading."""
-        md = "## 1.1 Аналіз результатів"
-        nodes = parse_markdown_to_nodes(md)
-        assert len(nodes) == 1
-        assert nodes[0] == {"type": "heading", "level": 2, "text": "1.1 Аналіз результатів"}
-
-    def test_parse_level_3_heading(self):
-        """Parse level 3 heading."""
-        md = "### 1.1.1 Детальний аналіз"
-        nodes = parse_markdown_to_nodes(md)
-        assert len(nodes) == 1
-        assert nodes[0] == {"type": "heading", "level": 3, "text": "1.1.1 Детальний аналіз"}
-
-    def test_parse_heading_with_extra_spaces(self):
-        """Parse heading with extra spaces."""
-        md = "#   ВСТУП   "
-        nodes = parse_markdown_to_nodes(md)
-        assert nodes[0]["text"] == "ВСТУП"
-
-
-class TestCodeBlockParsing:
-    """Test fenced code block parsing."""
-
-    def test_parse_inline_code_block(self):
-        """Parse inline code block with caption."""
-        md = '''```python {caption="Лістинг 1.1 — Функція"}
-def calculate(x):
-    return x * 2
-```'''
-        nodes = parse_markdown_to_nodes(md)
-        assert len(nodes) == 1
-        assert nodes[0]["type"] == "code"
-        assert nodes[0]["language"] == "python"
-        assert nodes[0]["caption"] == "Лістинг 1.1 — Функція"
-        assert "def calculate(x):" in nodes[0]["code"]
-
-    def test_parse_code_block_with_path(self):
-        """Parse code block with file path."""
-        md = '```python {caption="Лістинг 1.2" path="src/file.py"}\n```'
-        nodes = parse_markdown_to_nodes(md)
-        assert len(nodes) == 1
-        assert nodes[0]["type"] == "code"
-        assert nodes[0]["path"] == "src/file.py"
-        assert nodes[0]["caption"] == "Лістинг 1.2"
-        assert "code" not in nodes[0] or nodes[0]["code"] == ""
-
-    def test_parse_code_block_without_metadata(self):
-        """Parse code block without metadata."""
-        md = '''```python
-print("hello")
-```'''
-        nodes = parse_markdown_to_nodes(md)
-        assert len(nodes) == 1
-        assert nodes[0]["type"] == "code"
-        assert nodes[0]["language"] == "python"
-        assert "caption" not in nodes[0]
-
-
-class TestImageParsing:
-    """Test Pandoc-style image parsing."""
-
-    def test_parse_image_with_all_attributes(self):
-        """Parse image with all attributes."""
-        md = '![Рисунок 1.1 — Головне вікно](images/screenshot.png){width=17.0 fit_to_page=true align=center}'
-        nodes = parse_markdown_to_nodes(md)
-        assert len(nodes) == 1
-        assert nodes[0]["type"] == "image"
-        assert nodes[0]["path"] == "images/screenshot.png"
-        assert nodes[0]["caption"] == "Рисунок 1.1 — Головне вікно"
-        assert nodes[0]["width_cm"] == 17.0
-        assert nodes[0]["fit_to_page"] == True
-        assert nodes[0]["align"] == "center"
-
-    def test_parse_image_with_placeholder(self):
-        """Parse image with placeholder flag."""
-        md = '![Рисунок 1.2](image.png){placeholder=true}'
-        nodes = parse_markdown_to_nodes(md)
-        assert nodes[0]["placeholder"] == True
-
-    def test_parse_image_without_caption(self):
-        """Parse image without caption."""
-        md = '![](image.png){width=10.0}'
-        nodes = parse_markdown_to_nodes(md)
-        assert nodes[0]["caption"] is None
-        assert nodes[0]["width_cm"] == 10.0
-
-
-class TestFormulaParsing:
-    """Test LaTeX formula parsing."""
-
-    def test_parse_formula_with_caption(self):
-        """Parse formula with caption."""
-        md = '$$E_k = \\frac{m \\cdot v^2}{2}$$ (1.1)'
+    def test_formula_default_center(self):
+        """Formulas should default to align='center'."""
+        md = "$$E = mc^2$$ (1.1)"
         nodes = parse_markdown_to_nodes(md)
         assert len(nodes) == 1
         assert nodes[0]["type"] == "formula"
-        assert nodes[0]["content"] == "E_k = \\frac{m \\cdot v^2}{2}"
+        assert nodes[0]["content"] == "E = mc^2"
         assert nodes[0]["caption"] == "(1.1)"
-
-    def test_parse_formula_with_alignment(self):
-        """Parse formula with alignment attribute."""
-        md = '$$V = \\pi r^2 h$$ (1.2) {align=center}'
-        nodes = parse_markdown_to_nodes(md)
         assert nodes[0]["align"] == "center"
-        assert nodes[0]["caption"] == "(1.2)"
 
-    def test_parse_formula_without_caption(self):
-        """Parse formula without caption."""
-        md = '$$x = y + z$$'
+    def test_image_default_center_fit(self):
+        """Images should default to align='center' and fit_to_page=True."""
+        md = "![Рисунок 1.1 — Зображення](images/fig1.png)"
         nodes = parse_markdown_to_nodes(md)
+        assert len(nodes) == 1
+        assert nodes[0]["type"] == "image"
+        assert nodes[0]["path"] == "images/fig1.png"
+        assert nodes[0]["caption"] == "Рисунок 1.1 — Зображення"
+        assert nodes[0]["align"] == "center"
+        assert nodes[0]["fit_to_page"] is True
+
+    def test_table_default_style_repeat(self):
+        """Tables should default to style='Table Grid' and repeat_header=True."""
+        md = """| Колонка 1 | Колонка 2 |
+|-----------|-----------|
+| Дані      | Дані      |"""
+        nodes = parse_markdown_to_nodes(md)
+        assert len(nodes) == 1
+        assert nodes[0]["type"] == "table"
+        assert nodes[0]["style"] == "Table Grid"
+        assert nodes[0]["repeat_header"] is True
+
+
+class TestSmartCaptionAbsorption:
+    """Test Smart Caption Absorption for code blocks and tables."""
+
+    def test_listing_caption_absorption(self):
+        """Italic caption before code block should be absorbed."""
+        md = """*Лістинг 1.1 — Приклад коду*
+```python
+def hello():
+    print("Hello")
+```"""
+        nodes = parse_markdown_to_nodes(md)
+        assert len(nodes) == 1
+        assert nodes[0]["type"] == "code"
+        assert nodes[0]["caption"] == "Лістинг 1.1 — Приклад коду"
+        assert nodes[0]["language"] == "python"
+
+    def test_listing_caption_with_path(self):
+        """Italic caption with path should be absorbed."""
+        md = """*Лістинг 2.1 — Конфігурація (config.yaml)*
+```yaml
+key: value
+```"""
+        nodes = parse_markdown_to_nodes(md)
+        assert len(nodes) == 1
+        assert nodes[0]["type"] == "code"
+        # The caption excludes the path
+        assert nodes[0]["caption"] == "Лістинг 2.1 — Конфігурація"
+        # The path is extracted separately
+        assert nodes[0]["path"] == "config.yaml"
+
+    def test_listing_caption_not_followed_by_code(self):
+        """Italic caption not followed by code should become paragraph."""
+        md = """*Лістинг 1.1 — Приклад коду*
+
+Звичайний текст після."""
+        nodes = parse_markdown_to_nodes(md)
+        assert len(nodes) == 2
+        assert nodes[0]["type"] == "paragraph"
+        # The caption should be stripped of asterisks
+        assert "Лістинг 1.1 — Приклад коду" in nodes[0]["text"]
+        assert nodes[1]["type"] == "paragraph"
+
+    def test_table_caption_absorption(self):
+        """Italic caption before table should be absorbed."""
+        md = """*Таблиця 1.1 — Результати тестів*
+| Тест | Результат |
+|------|-----------|
+| A    | Pass      |
+| B    | Fail      |"""
+        nodes = parse_markdown_to_nodes(md)
+        assert len(nodes) == 1
+        assert nodes[0]["type"] == "table"
+        assert nodes[0]["caption"] == "Таблиця 1.1 — Результати тестів"
+
+    def test_table_caption_not_followed_by_table(self):
+        """Italic table caption not followed by table should become paragraph."""
+        md = """*Таблиця 1.1 — Результати тестів*
+
+Звичайний текст після."""
+        nodes = parse_markdown_to_nodes(md)
+        assert len(nodes) == 2
+        assert nodes[0]["type"] == "paragraph"
+        # The caption should be stripped of asterisks
+        assert "Таблиця 1.1 — Результати тестів" in nodes[0]["text"]
+        assert nodes[1]["type"] == "paragraph"
+
+
+class TestNaturalImages:
+    """Test natural image syntax with placeholder detection."""
+
+    def test_natural_image(self):
+        """Standard image syntax."""
+        md = "![Рисунок 1.1 — Скріншот](screenshots/ui.png)"
+        nodes = parse_markdown_to_nodes(md)
+        assert len(nodes) == 1
+        assert nodes[0]["type"] == "image"
+        assert nodes[0]["path"] == "screenshots/ui.png"
+        assert nodes[0]["caption"] == "Рисунок 1.1 — Скріншот"
+        assert nodes[0]["align"] == "center"
+        assert nodes[0]["fit_to_page"] is True
+
+    def test_placeholder_detection(self):
+        """Image with path='placeholder' should be rewritten and marked as placeholder."""
+        md = "![Рисунок 1.2 — Місце для скріншоту](placeholder)"
+        nodes = parse_markdown_to_nodes(md)
+        assert len(nodes) == 1
+        assert nodes[0]["type"] == "image"
+        # Parser rewrites "placeholder" to "images/placeholder.png"
+        assert nodes[0]["path"] == "images/placeholder.png"
+        assert nodes[0]["placeholder"] is True
+        assert nodes[0]["caption"] == "Рисунок 1.2 — Місце для скріншоту"
+
+    def test_image_without_caption(self):
+        """Image without caption text."""
+        md = "![](images/fig.png)"
+        nodes = parse_markdown_to_nodes(md)
+        assert len(nodes) == 1
+        assert nodes[0]["type"] == "image"
+        assert nodes[0]["path"] == "images/fig.png"
+        # Empty caption string becomes None
+        assert nodes[0]["caption"] is None
+
+
+class TestFormulas:
+    """Test LaTeX formula parsing."""
+
+    def test_formula_with_caption(self):
+        """Formula with caption in parentheses."""
+        md = "$$E = mc^2$$ (1.1)"
+        nodes = parse_markdown_to_nodes(md)
+        assert len(nodes) == 1
+        assert nodes[0]["type"] == "formula"
+        assert nodes[0]["content"] == "E = mc^2"
+        assert nodes[0]["caption"] == "(1.1)"
+        assert nodes[0]["align"] == "center"
+
+    def test_formula_without_caption(self):
+        """Formula without caption."""
+        md = "$$x = y + z$$"
+        nodes = parse_markdown_to_nodes(md)
+        assert len(nodes) == 1
         assert nodes[0]["type"] == "formula"
         assert nodes[0]["content"] == "x = y + z"
         assert "caption" not in nodes[0]
 
-
-class TestTableParsing:
-    """Test pipe table parsing."""
-
-    def test_parse_table_with_caption_above(self):
-        """Parse table with caption above."""
-        md = '''Table: Таблиця 1.1 — Параметри
-| Назва | Значення |
-|-------|----------|
-| Порт  | 8080     |'''
+    def test_complex_formula(self):
+        """Complex LaTeX formula."""
+        md = r"$$\int_0^1 x^2 dx = \frac{1}{3}$$ (2.1)"
         nodes = parse_markdown_to_nodes(md)
         assert len(nodes) == 1
-        assert nodes[0]["type"] == "table"
-        assert nodes[0]["caption"] == "Таблиця 1.1 — Параметри"
-        assert len(nodes[0]["rows"]) == 2
+        assert nodes[0]["type"] == "formula"
+        assert r"\int_0^1 x^2 dx = \frac{1}{3}" in nodes[0]["content"]
+        assert nodes[0]["caption"] == "(2.1)"
 
-    def test_parse_table_with_caption_below(self):
-        """Parse table with caption below."""
-        md = '''| Колонка 1 | Колонка 2 |
-|-----------|-----------|
-| Дані      | Дані      |
-: Таблиця 1.2 — Назва'''
+
+class TestLineBreaks:
+    """Test line break parsing."""
+
+    def test_simple_br(self):
+        """Simple <br> tag."""
+        md = "Перший рядок.<br>Другий рядок."
         nodes = parse_markdown_to_nodes(md)
-        assert nodes[0]["caption"] == "Таблиця 1.2 — Назва"
+        # Should be one paragraph with newline
+        assert len(nodes) == 1
+        assert nodes[0]["type"] == "paragraph"
+        assert "Перший рядок.\nДругий рядок." in nodes[0]["text"]
 
-    def test_parse_table_with_br_tags(self):
-        """Parse table with <br> tags in cells."""
-        md = '''| Текст |
-|-------|
-| Рядок 1<br>Рядок 2 |'''
+    def test_br_with_count(self):
+        """<br> with count parameter."""
+        md = "Текст<br count=3>Більше тексту."
         nodes = parse_markdown_to_nodes(md)
-        assert "Рядок 1\nРядок 2" in nodes[0]["rows"][1][0]
+        # Should be one paragraph with the raw <br> tag preserved
+        assert len(nodes) == 1
+        assert nodes[0]["type"] == "paragraph"
+        # The <br count=3> tag is preserved as-is in the text
+        assert "<br count=3>" in nodes[0]["text"]
 
-    def test_parse_table_with_attributes(self):
-        """Parse table with style attributes."""
-        md = '''Table: Таблиця 1.3 {style="Table Grid" repeat_header=false}
-| A | B |
-|---|---|
-| 1 | 2 |'''
+
+class TestPageBreaks:
+    """Test page break parsing."""
+
+    def test_hr_break(self):
+        """Horizontal rule as page break."""
+        md = """Розділ 1.
+
+---
+
+Розділ 2."""
         nodes = parse_markdown_to_nodes(md)
-        assert nodes[0]["style"] == "Table Grid"
-        assert nodes[0]["repeat_header"] == False
+        assert len(nodes) == 3
+        assert nodes[0]["type"] == "paragraph"
+        # --- creates a break node with style="page"
+        assert nodes[1]["type"] == "break"
+        assert nodes[1]["style"] == "page"
+        assert nodes[2]["type"] == "paragraph"
 
 
-class TestListParsing:
+class TestHeadings:
+    """Test heading parsing."""
+
+    def test_heading_levels(self):
+        """All heading levels."""
+        md = """# Заголовок 1
+## Заголовок 2
+### Заголовок 3
+#### Заголовок 4"""
+        nodes = parse_markdown_to_nodes(md)
+        assert len(nodes) == 4
+        assert nodes[0]["level"] == 1
+        assert nodes[1]["level"] == 2
+        assert nodes[2]["level"] == 3
+        assert nodes[3]["level"] == 4
+
+
+class TestLists:
     """Test list parsing."""
 
-    def test_parse_bullet_list(self):
-        """Parse bullet list."""
-        md = '''- перший елемент;
-- другий елемент;
-- останній елемент.'''
+    def test_bullet_list(self):
+        """Bullet list with dashes."""
+        md = """- Пункт 1
+- Пункт 2
+- Пункт 3"""
         nodes = parse_markdown_to_nodes(md)
         assert len(nodes) == 1
         assert nodes[0]["type"] == "list"
         assert nodes[0]["style"] == "bullet"
         assert len(nodes[0]["items"]) == 3
 
-    def test_parse_numbered_list(self):
-        """Parse numbered list."""
-        md = '''1. перший крок;
-2. другий крок;
-3. останній крок.'''
+    def test_numbered_list(self):
+        """Numbered list."""
+        md = """1. Перший
+2. Другий
+3. Третій"""
         nodes = parse_markdown_to_nodes(md)
+        assert len(nodes) == 1
+        assert nodes[0]["type"] == "list"
         assert nodes[0]["style"] == "numbered"
         assert len(nodes[0]["items"]) == 3
 
-    def test_parse_alpha_cyrillic_list(self):
-        """Parse Cyrillic alpha list."""
-        md = '''а) перший варіант;
-б) другий варіант.'''
+    def test_alpha_cyrillic_list(self):
+        """Cyrillic alphabetic list."""
+        md = """а) Пункт а
+б) Пункт б
+в) Пункт в"""
         nodes = parse_markdown_to_nodes(md)
+        assert len(nodes) == 1
+        assert nodes[0]["type"] == "list"
         assert nodes[0]["style"] == "alpha_cyrillic"
 
-    def test_parse_alpha_latin_list(self):
-        """Parse Latin alpha list."""
-        md = '''a) first item;
-b) second item.'''
+    def test_alpha_latin_list(self):
+        """Latin alphabetic list."""
+        md = """a) Item a
+b) Item b
+c) Item c"""
         nodes = parse_markdown_to_nodes(md)
+        assert len(nodes) == 1
+        assert nodes[0]["type"] == "list"
         assert nodes[0]["style"] == "alpha_latin"
 
-    def test_parse_nested_list(self):
-        """Parse nested list with indentation."""
-        md = '''- перший рівень;
-  - другий рівень;
-  - ще один елемент;
-- останній елемент.'''
-        nodes = parse_markdown_to_nodes(md)
-        # Should create three list nodes (level 1, level 2, level 1)
-        assert len(nodes) == 3
-        assert nodes[0]["level"] == 1
-        assert nodes[0]["items"] == ["перший рівень;"]
-        assert nodes[1]["level"] == 2
-        assert nodes[1]["items"] == ["другий рівень;", "ще один елемент;"]
-        assert nodes[2]["level"] == 1
-        assert nodes[2]["items"] == ["останній елемент."]
 
+class TestTables:
+    """Test table parsing."""
 
-class TestParagraphParsing:
-    """Test paragraph parsing."""
-
-    def test_parse_simple_paragraph(self):
-        """Parse simple paragraph."""
-        md = "Це звичайний абзац тексту."
+    def test_simple_table(self):
+        """Simple table without caption."""
+        md = """| A | B | C |
+|---|---|---|
+| 1 | 2 | 3 |
+| 4 | 5 | 6 |"""
         nodes = parse_markdown_to_nodes(md)
         assert len(nodes) == 1
-        assert nodes[0]["type"] == "paragraph"
-        assert nodes[0]["text"] == "Це звичайний абзац тексту."
+        assert nodes[0]["type"] == "table"
+        assert len(nodes[0]["rows"]) == 3  # header + 2 data rows
+        assert nodes[0]["style"] == "Table Grid"
+        assert nodes[0]["repeat_header"] is True
 
-    def test_parse_paragraph_with_alignment(self):
-        """Parse paragraph with alignment attribute."""
-        md = "Текст з вирівнюванням. {align=center}"
-        nodes = parse_markdown_to_nodes(md)
-        assert nodes[0]["align"] == "center"
-        assert nodes[0]["text"] == "Текст з вирівнюванням."
-
-    def test_parse_multiline_paragraph(self):
-        """Parse paragraph with multiple lines."""
-        md = '''Перший рядок.
-Другий рядок.
-Третій рядок.'''
-        nodes = parse_markdown_to_nodes(md)
-        assert "Перший рядок." in nodes[0]["text"]
-        assert "Другий рядок." in nodes[0]["text"]
-
-
-class TestPageBreakParsing:
-    """Test page break parsing."""
-
-    def test_parse_page_break_dashes(self):
-        """Parse page break with dashes."""
-        md = "---"
+    def test_table_with_br_in_cells(self):
+        """Table with <br> tags in cells."""
+        md = """| Колонка |
+|---------|
+| Рядок 1<br>Рядок 2 |"""
         nodes = parse_markdown_to_nodes(md)
         assert len(nodes) == 1
-        assert nodes[0] == {"type": "break", "style": "page"}
+        assert nodes[0]["type"] == "table"
+        # Check that <br> was converted to newline
+        cell_content = nodes[0]["rows"][1][0]
+        assert "\n" in cell_content
 
-    def test_parse_page_break_asterisks(self):
-        """Parse page break with asterisks."""
-        md = "***"
+
+class TestCodeBlocks:
+    """Test code block parsing."""
+
+    def test_code_block_with_language(self):
+        """Code block with language specified."""
+        md = """```python
+def hello():
+    print("Hello")
+```"""
         nodes = parse_markdown_to_nodes(md)
-        assert nodes[0] == {"type": "break", "style": "page"}
+        assert len(nodes) == 1
+        assert nodes[0]["type"] == "code"
+        assert nodes[0]["language"] == "python"
+        assert "def hello():" in nodes[0]["code"]
+
+    def test_code_block_without_language(self):
+        """Code block without language."""
+        md = """```
+some code here
+```"""
+        nodes = parse_markdown_to_nodes(md)
+        assert len(nodes) == 1
+        assert nodes[0]["type"] == "code"
+        assert "language" not in nodes[0]
 
 
-class TestComplexDocuments:
-    """Test parsing of complex multi-element documents."""
+class TestComplexDocument:
+    """Test parsing of complex documents with multiple element types."""
 
-    def test_parse_mixed_content(self):
-        """Parse document with multiple element types."""
-        md = '''# ВСТУП
+    def test_mixed_content(self):
+        """Document with headings, paragraphs, lists, code, images, formulas."""
+        md = """# ВСТУП
 
-Це вступний абзац.
+Це вступний текст.
 
-## 1.1 Аналіз
+## 1.1 Основна частина
 
-![Рисунок 1.1](image.png){width=10.0}
+*Лістинг 1.1 — Приклад*
+```python
+print("Hello")
+```
+
+*Таблиця 1.1 — Дані*
+| A | B |
+|---|---|
+| 1 | 2 |
+
+![Рисунок 1.1](images/fig.png)
 
 $$E = mc^2$$ (1.1)
 
-- елемент 1;
-- елемент 2.'''
+- Пункт 1
+- Пункт 2"""
         nodes = parse_markdown_to_nodes(md)
         
-        # Should have: heading, paragraph, heading, image, formula, list
+        # Check we got all expected types
         types = [n["type"] for n in nodes]
         assert "heading" in types
         assert "paragraph" in types
+        assert "code" in types
+        assert "table" in types
         assert "image" in types
         assert "formula" in types
         assert "list" in types
+        
+        # Check caption absorption worked
+        code_node = next(n for n in nodes if n["type"] == "code")
+        assert code_node["caption"] == "Лістинг 1.1 — Приклад"
+        
+        table_node = next(n for n in nodes if n["type"] == "table")
+        assert table_node["caption"] == "Таблиця 1.1 — Дані"
 
-    def test_parse_empty_document(self):
-        """Parse empty document."""
-        md = ""
-        nodes = parse_markdown_to_nodes(md)
+
+class TestEdgeCases:
+    """Test edge cases and error handling."""
+
+    def test_empty_document(self):
+        """Empty document should return empty list."""
+        nodes = parse_markdown_to_nodes("")
         assert nodes == []
 
-    def test_parse_only_whitespace(self):
-        """Parse document with only whitespace."""
-        md = "   \n\n   \n"
-        nodes = parse_markdown_to_nodes(md)
+    def test_whitespace_only(self):
+        """Whitespace-only document should return empty list."""
+        nodes = parse_markdown_to_nodes("   \n\n   \n")
         assert nodes == []
+
+    def test_consecutive_empty_lines(self):
+        """Multiple empty lines should be ignored."""
+        md = """Текст 1.
+
+
+
+Текст 2."""
+        nodes = parse_markdown_to_nodes(md)
+        assert len(nodes) == 2
+        assert all(n["type"] == "paragraph" for n in nodes)
 
 
 if __name__ == "__main__":

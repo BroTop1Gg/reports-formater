@@ -34,7 +34,7 @@ content:
     text: "This section tests heading rendering."
 
 
-  # TEST 2: PARAGRAPH FORMATTING
+  # TEST 2: PARAGRAPHS
   - type: heading
     level: 1
     text: "TEST 2: PARAGRAPHS"
@@ -57,26 +57,6 @@ content:
 
   - type: paragraph
     text: "Testing **mixed** formatting: *italic*, `code`, and **bold** in one paragraph."
-
-  - type: heading
-    level: 2
-    text: "2.2 Paragraph Alignment"
-
-  - type: paragraph
-    text: "ALIGNMENT: LEFT - This paragraph should be aligned to the left edge."
-    align: left
-
-  - type: paragraph
-    text: "ALIGNMENT: CENTER - This paragraph should be centered."
-    align: center
-
-  - type: paragraph
-    text: "ALIGNMENT: RIGHT - This paragraph should be aligned to the right edge."
-    align: right
-
-  - type: paragraph
-    text: "ALIGNMENT: JUSTIFY - This paragraph should be justified (both edges aligned). Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore."
-    align: justify
 
 
 
@@ -154,7 +134,7 @@ content:
     text: "TEST 4: TABLES"
 
   - type: table
-    caption: "Table 1 – Simple test table (first row should repeat on page break):"
+    caption: "Таблиця 1 — Simple test table (first row should repeat on page break):"
     rows:
       - ["Column A", "Column B", "Column C"]
       - ["Row 1 Cell 1\nLine 2", "Row 1 Cell 2", "Row 1 Cell 3"]
@@ -172,7 +152,7 @@ content:
     text: "The following should display as monospace code block:"
 
   - type: code
-    caption: "Listing 1 – Python function example"
+    caption: "Лістинг 1 — Python function example"
     code: |
       def test_function(arg1, arg2):
           """Test docstring."""
@@ -182,7 +162,7 @@ content:
 
 
   - type: code
-    caption: "Listing 2 – QuickSort (C language)"
+    caption: "Лістинг 2 — QuickSort (C language)"
     code: |
       #include <stdio.h>
 
@@ -231,7 +211,7 @@ content:
 
 
   - type: code
-    caption: "Listing 3 – Native File Embedding (Relative Path)"
+    caption: "Лістинг 3 — Native File Embedding (Relative Path)"
     path: "sample_code.cs" # Also can be abosulte but i prefer relative path for portability.
 
 
@@ -246,37 +226,39 @@ content:
 
   - type: image
     path: "assets/test_image.png"
-    width_cm: 10
     align: center
-    caption: "Figure 1 – Test image (should be visible and centered)"
+    fit_to_page: true
+    caption: "Figure 1 — Test image (should be visible and centered)"
 
 
 
   - type: image
     path: "assets/test_image.png"
-    # No width specified -> should auto-size to ~16.5cm
     align: center
-    caption: "Figure 2 – Auto-sized image with caption below"
+    fit_to_page: true
+    caption: "Figure 2 — Auto-sized image with caption below"
 
 
   - type: image
-    path: "assets/test_image.png"
+    path: "images/placeholder.png"
     placeholder: true
     align: center
-    caption: "Figure 3 – Intentional Image Placeholder (placeholder: true)"
+    fit_to_page: true
+    caption: "Figure 3 — Intentional Image Placeholder (placeholder: true)"
 
 
   - type: image
     path: "assets/this_file_does_not_exist.png"
     align: center
-    caption: "Figure 4 – Missing Image Error Placeholder"
+    fit_to_page: true
+    caption: "Figure 4 — Missing Image Error Placeholder"
 
 
   - type: image
     path: "assets/tall_lorem.png"
     fit_to_page: true
     align: center
-    caption: "Figure 5 – Extra tall image vertically constrained by fit_to_page"
+    caption: "Figure 5 — Extra tall image vertically constrained by fit_to_page"
 
 
   - type: break
@@ -293,6 +275,7 @@ content:
 
   - type: formula
     content: "E = mc^2"
+    align: center
     caption: "(1.1)"
 
   - type: paragraph
@@ -331,11 +314,9 @@ content:
 
   - type: paragraph
     text: "This paragraph node contains a newline.\nThis should be rendered as a SEPARATE paragraph in Word, with its own spacing and indents."
-    align: justify
 
   - type: paragraph
     text: "Testing triple newlines:\n\n\nThis should result in two empty paragraphs between these lines."
-    align: center
 
   # TEST END: SUMMARY
   - type: heading
