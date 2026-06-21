@@ -1,176 +1,145 @@
 # Active Development
 
-## Current Phase: Phase 3 - Dual-Protocol Gateway & Documentation
+## Current Phase: Phase 4 - Natural Markdown Syntax Refactoring
 
 **Status:** Complete  
-**Completed:** 2026-06-21
+**Completed:** 2026-06-22
 
 ---
 
-## Phase 3 Deliverables
+## Phase 4 Deliverables
 
-### 1. Dual-Protocol MCP Servers ✅
-**Files:** 
-- `src/mcp_server_yaml.py`
-- `src/mcp_server_markdown.py`
-
-**Purpose:** Provide two specialized MCP servers for different input formats.
-
-**YAML Server:**
-- Tools: `init_report`, `submit_chunk`, `finalize_report`
-- Resource: `dstu://guidelines` → `ai_system_prompt_yaml.md`
-- Input: Structured YAML format
-- Use case: Precise control, programmatic generation
-
-**Markdown Server:**
-- Tools: `init_report`, `submit_markdown_chunk`, `finalize_report`
-- Resource: `dstu://guidelines` → `ai_system_prompt_markdown.md`
-- Input: Natural Pandoc-style Markdown
-- Use case: LLM-native writing, faster iteration
-
-**Result:** ✅ Both servers operational, tested with MCP protocol
-
----
-
-### 2. Markdown Transpiler Bridge ✅
+### 1. Markdown Parser Refactoring ✅
 **File:** `src/sdk/markdown_parser.py`
 
-**Purpose:** Convert Pandoc-style Markdown to internal AST nodes.
+**Purpose:** Eliminate complex Pandoc-style curly-brace attributes in favor of natural, LLM-friendly syntax with Smart Defaults and Smart Caption Absorption.
 
-**Supported Elements:**
-- Headings: `# H1`, `## H2`, etc.
-- Code blocks: ` ```python {caption="..."}` with metadata
-- Images: `![caption](path){width=10 fit_to_page=true}`
-- Formulas: `$$E=mc^2$$ (1.1) {align=center}`
-- Tables: Markdown tables with `Table: Caption` syntax
-- Lists: Bullet, numbered, alpha (Cyrillic/Latin)
-- Paragraphs: With trailing attributes `{align=justify}`
+**Key Changes:**
+- **Removed:** All `{align=...}`, `{width=...}`, `{style=...}` attribute parsing
+- **Smart Defaults:**
+  - Paragraphs: `align: "justify"` (automatic)
+  - Formulas: `align: "center"` (automatic)
+  - Images: `align: "center"`, `fit_to_page: true` (automatic)
+  - Tables: `style: "Table Grid"`, `repeat_header: true` (automatic)
+- **Smart Caption Absorption:**
+  - Italic captions (`*Лістинг X.Y — Name*`) before code blocks automatically become `caption` parameter
+  - Italic captions (`*Таблиця X.Y — Name*`) before tables automatically become `caption` parameter
+  - Path extraction: `*Лістинг 1.1 — Description (path/to/file.py)*` extracts both caption and path
+- **Natural Image Placeholders:** `![Caption](placeholder)` automatically sets `placeholder: true` and rewrites path to `images/placeholder.png`
 
-**Integration:** `ReportSession.add_markdown_chunk()` method
+**New Syntax Examples:**
+```markdown
+*Лістинг 1.1 — Python function example*
+```python
+def hello():
+    print("Hello")
+```
 
-**Result:** ✅ 38 unit tests passing, full Pandoc syntax coverage
+*Таблиця 1.1 — Results*
+| Column A | Column B |
+|----------|----------|
+| Data 1   | Data 2   |
 
----
+![Figure 1.1 — Screenshot](images/screenshot.png)
+![Figure 1.2 — Placeholder](placeholder)
 
-### 3. E2E Markdown Identity Test ✅
-**File:** `tests/test_e2e_identity.py`
+$$E = mc^2$$ (1.1)
+```
 
-**Test:** `test_monolithic_yaml_vs_mcp_markdown_parity`
-
-**Purpose:** Verify Markdown→YAML→AST→DOCX produces identical output to direct YAML→AST→DOCX.
-
-**Method:**
-1. Load `test_with_title.yaml` (reference)
-2. Create equivalent `test_with_title.md`
-3. Compile both to .docx
-4. Compare: paragraphs, tables, formatting, alignment, margins
-
-**Result:** ✅ 100% structural parity confirmed
-
----
-
-### 4. Markdown Self-Healing Test ✅
-**File:** `tests/test_self_healing_sim.py`
-
-**Test:** `test_markdown_self_healing_recovery`
-
-**Purpose:** Verify Markdown transpiler can recover from malformed input.
-
-**Scenario:**
-1. Submit malformed Markdown (e.g., broken code block)
-2. Receive structured error
-3. Correct and resubmit
-4. Verify successful compilation
-
-**Result:** ✅ Self-healing works for Markdown input
+**Result:** ✅ 31 unit tests passing, 100% E2E parity with YAML pipeline
 
 ---
 
-### 5. Documentation Overhaul ✅
+### 2. Test Files Update ✅
 **Files:**
-- `README.md` - Updated with Dual-Protocol Gateway section
-- `tutorial/TUTORIAL.md` - Rewritten for MCP-first workflow
-- `familiarization/ai_system_prompt_markdown.md` - New Markdown prompt
-
-**Key Additions:**
-- MCP configuration examples (Cursor, Claude Desktop)
-- Markdown syntax reference
-- Step-by-step MCP integration guide
-- Fallback CLI instructions preserved
-
-**Result:** ✅ Complete documentation for both protocols
-
----
-
-### 6. Configuration Alignment ✅
-**File:** `mcp_config.json`
+- `tests/input/test_with_title.md` - Rewritten with natural syntax
+- `tests/input/test_with_title.yaml` - Updated to match MD structure
+- `tests/test_markdown_parser.py` - Complete overhaul for new parser behavior
 
 **Changes:**
-- Updated paths to `/home/acer/Projects/DevelopingUtilities/reports-formater/`
-- Added both YAML and Markdown server configurations
+- Removed all `{...}` attribute syntax from test files
+- Updated assertions to verify Smart Defaults
+- Added tests for Smart Caption Absorption (with and without path extraction)
+- Added tests for natural image placeholders
+- Fixed regex pattern to correctly separate caption from path in listing captions
 
-**Result:** ✅ All paths aligned, ready for deployment
+**Result:** ✅ All 73 tests pass (100% success rate)
+
+---
+
+### 3. System Prompts Update ✅
+**Files:**
+- `familiarization/ai_system_prompt_markdown.md` - Updated with natural syntax specification
+- `familiarization/ai_system_prompt_yaml.md` - Minor updates
+
+**Key Additions:**
+- Explicit prohibition of curly-brace attributes
+- Smart Defaults documentation
+- Smart Caption Absorption examples
+- Natural image placeholder syntax
+
+**Result:** ✅ AI agents now generate clean, natural Markdown
+
+---
+
+### 4. Pytest Configuration ✅
+**File:** `tests/conftest.py`
+
+**Purpose:** Fix module import issues in test suite.
+
+**Changes:**
+- Added `sys.path.insert(0, project_root)` to enable `from src.sdk...` imports
+- Ensures consistent test execution across different environments
+
+**Result:** ✅ All tests run without import errors
 
 ---
 
 ## Test Results Summary
 
-**Total Tests:** 79  
-**Passed:** 79  
+**Total Tests:** 73  
+**Passed:** 73  
 **Failed:** 0  
 **Success Rate:** 100%
 
 **Test Suites:**
-- `test_markdown_parser.py`: 38 tests (Markdown parsing)
+- `test_markdown_parser.py`: 31 tests (natural syntax parsing)
 - `test_mcp_transport.py`: 3 tests (MCP protocol)
 - `test_e2e_identity.py`: 3 tests (structural parity)
 - `test_self_healing_sim.py`: 8 tests (validation & recovery)
 - `test_mcp_server.py`: 15 tests (MCP registration)
 - `test_sdk_session.py`: 12 tests (session API)
+- `test_cli_markdown.py`: 1 test (CLI markdown compilation)
 
-**Execution Time:** ~10 seconds
+**Execution Time:** ~12 seconds
 
 ---
 
-## Architecture Overview
+## Architecture Changes
 
+### Before Phase 4 (Pandoc-style)
+```markdown
+![Caption](path){width=10.0 fit_to_page=true align=center}
+$$formula$$ (1.1) {align=center}
+Table: Caption {style="Table Grid" repeat_header=true}
+```python {caption="Listing 1.1" path="file.py"}
+code
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    MCP Clients                           │
-│  (Cursor, Claude Desktop, AI Agents)                    │
-└────────────┬─────────────────────┬──────────────────────┘
-             │                     │
-             │ YAML                │ Markdown
-             ▼                     ▼
-┌────────────────────┐   ┌────────────────────┐
-│ mcp_server_yaml.py │   │mcp_server_markdown.py│
-│  submit_chunk()    │   │submit_markdown_chunk()│
-└────────┬───────────┘   └────────┬─────────────┘
-         │                        │
-         │                        ▼
-         │              ┌──────────────────┐
-         │              │ markdown_parser.py│
-         │              │  (transpiler)     │
-         │              └────────┬─────────┘
-         │                       │
-         └───────┬───────────────┘
-                 │
-                 ▼
-      ┌──────────────────┐
-      │  ReportSession   │
-      │  (session.py)    │
-      │  - add_chunk()   │
-      │  - nodes[]       │
-      └────────┬─────────┘
-               │
-               ▼
-      ┌──────────────────┐
-      │ ReportFactory    │
-      │ (report_factory) │
-      └────────┬─────────┘
-               │
-               ▼
-          .docx output
+```
+
+### After Phase 4 (Natural Syntax)
+```markdown
+![Caption](path)  # Smart Defaults: center, fit_to_page
+$$formula$$ (1.1)  # Smart Default: center
+*Таблиця 1.1 — Caption*  # Smart Caption Absorption
+| col1 | col2 |
+|------|------|
+| data | data |
+
+*Лістинг 1.1 — Description (file.py)*  # Smart Caption Absorption + path extraction
+```python
+code
+```
 ```
 
 ---
@@ -179,12 +148,12 @@
 
 ### Markdown Transpiler Coverage
 - Headings: ✅
-- Code blocks: ✅ (with metadata)
-- Images: ✅ (with attributes)
-- Formulas: ✅ (with captions)
-- Tables: ✅ (with captions)
+- Code blocks: ✅ (Smart Caption Absorption)
+- Images: ✅ (Smart Defaults + natural placeholders)
+- Formulas: ✅ (Smart Defaults)
+- Tables: ✅ (Smart Caption Absorption + Smart Defaults)
 - Lists: ✅ (4 styles)
-- Paragraphs: ✅ (with alignment)
+- Paragraphs: ✅ (Smart Defaults)
 
 ### Structural Parity
 - YAML → DOCX: 100%
@@ -192,34 +161,54 @@
 - Paragraph count: Match
 - Table structure: Match
 - Formatting: Match
-- Alignment: Match
+- Alignment: Match (via Smart Defaults)
 - Margins: Match
 
-### Self-Healing
-- YAML errors: Recoverable
-- Markdown errors: Recoverable
-- State preservation: Verified
-- Error diagnostics: Structured
+---
+
+## Previous Phases
+
+### Phase 3: Dual-Protocol Gateway & Documentation (2026-06-21)
+- Dual MCP servers (YAML + Markdown)
+- Markdown transpiler bridge (initial Pandoc-style)
+- E2E identity tests
+- Self-healing validation
+- Documentation overhaul
+
+### Phase 2: MCP Server Implementation (2026-06-20)
+- Stdio JSON-RPC MCP wrapper
+- Tool registration and resource exposure
+- Crash recovery via draft_report.yaml
+
+### Phase 1: Core Engine & State Buffer (2026-06-19)
+- ReportFactory (stateless OXML compilation)
+- ReportSession (in-memory AST management)
+- Pydantic validation layer
+- All-or-nothing chunk processing
 
 ---
 
 ## Next Steps
 
-Phase 3 is complete. The Dual-Protocol Gateway is production-ready.
+Phase 4 is complete. The Natural Markdown Syntax is production-ready.
 
 **Recommended Future Work:**
 - Performance optimization (large documents)
-- Additional Markdown elements (footnotes, citations)
+- Additional Markdown elements (footnotes, citations, definition lists)
 - Real-time preview generation
 - Template customization API
-- Multi-language support
+- Multi-language support (beyond Ukrainian)
+- Schema versioning for backward compatibility
 
 ---
 
 ## Deployment Checklist
 
-- [x] All tests passing (79/79)
+- [x] All tests passing (73/73)
 - [x] MCP servers operational
+- [x] Natural Markdown syntax implemented
+- [x] Smart Defaults working correctly
+- [x] Smart Caption Absorption validated
 - [x] Documentation complete
 - [x] Configuration aligned
 - [x] E2E parity verified
