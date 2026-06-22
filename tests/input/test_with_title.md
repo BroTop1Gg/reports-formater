@@ -169,6 +169,23 @@ This paragraph node contains a newline.<br>This should be rendered as a SEPARATE
 
 Testing triple newlines:<br><br><br>This should result in two empty paragraphs between these lines.
 
+# Додаток А. Фрагменти вихідного коду
+
+Цей розділ є Додатком. Він починається з нової сторінки (нової секції) і має особливі колонтитули.
+
+Лістинг А.1 — Додатковий скрипт
+```python
+def helper():
+    return "This is appendix A"
+```
+
+# Додаток Б - Додаткові таблиці
+
+Таблиця Б.1 — Тестова таблиця додатка
+| Параметр | Значення |
+|----------|----------|
+| Статус   | Успішно  |
+
 # TEST SUMMARY
 
 If you can read this document correctly with all elements above visible, the test has PASSED. Check each section visually to confirm proper formatting.

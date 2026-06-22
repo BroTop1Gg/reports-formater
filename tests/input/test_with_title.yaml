@@ -318,6 +318,30 @@ content:
   - type: paragraph
     text: "Testing triple newlines:\n\n\nThis should result in two empty paragraphs between these lines."
 
+  # TEST 9: APPENDICES (ДОДАТКИ)
+  - type: appendix_marker
+    label: "А"
+    title: "Фрагменти вихідного коду"
+
+  - type: paragraph
+    text: "Цей розділ є Додатком. Він починається з нової сторінки (нової секції) і має особливі колонтитули."
+
+  - type: code
+    caption: "Лістинг А.1 — Додатковий скрипт"
+    code: |
+      def helper():
+          return "This is appendix A"
+
+  - type: appendix_marker
+    label: "Б"
+    title: "Додаткові таблиці"
+
+  - type: table
+    caption: "Таблиця Б.1 — Тестова таблиця додатка"
+    rows:
+      - ["Параметр", "Значення"]
+      - ["Статус", "Успішно"]
+
   # TEST END: SUMMARY
   - type: heading
     level: 1
