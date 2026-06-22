@@ -427,5 +427,88 @@ class TestEdgeCases:
         assert all(n["type"] == "paragraph" for n in nodes)
 
 
+class TestAppendixMarkers:
+    """Test appendix marker parsing (Додаток А, Додаток Б, etc.)."""
+
+    def test_appendix_with_dot_separator(self):
+        """Appendix marker with dot separator."""
+        md = "# Додаток А. Схеми"
+        nodes = parse_markdown_to_nodes(md)
+        assert len(nodes) == 1
+        assert nodes[0]["type"] == "appendix_marker"
+        assert nodes[0]["label"] == "А"
+        assert nodes[0]["title"] == "Схеми"
+
+    def test_appendix_with_dash_separator(self):
+        """Appendix marker with dash separator."""
+        md = "# Додаток Б - Таблиці"
+        nodes = parse_markdown_to_nodes(md)
+        assert len(nodes) == 1
+        assert nodes[0]["type"] == "appendix_marker"
+        assert nodes[0]["label"] == "Б"
+        assert nodes[0]["title"] == "Таблиці"
+
+    def test_appendix_with_space_separator(self):
+        """Appendix marker with space separator."""
+        md = "# Додаток В Графіки"
+        nodes = parse_markdown_to_nodes(md)
+        assert len(nodes) == 1
+        assert nodes[0]["type"] == "appendix_marker"
+        assert nodes[0]["label"] == "В"
+        assert nodes[0]["title"] == "Графіки"
+
+    def test_appendix_without_title(self):
+        """Appendix marker without title."""
+        md = "# Додаток Г"
+        nodes = parse_markdown_to_nodes(md)
+        assert len(nodes) == 1
+        assert nodes[0]["type"] == "appendix_marker"
+        assert nodes[0]["label"] == "Г"
+        assert nodes[0]["title"] is None
+
+    def test_appendix_latin_letter(self):
+        """Appendix marker with Latin letter."""
+        md = "# Додаток A. Additional materials"
+        nodes = parse_markdown_to_nodes(md)
+        assert len(nodes) == 1
+        assert nodes[0]["type"] == "appendix_marker"
+        assert nodes[0]["label"] == "A"
+        assert nodes[0]["title"] == "Additional materials"
+
+    def test_multiple_appendices(self):
+        """Multiple appendix markers in sequence."""
+        md = """# Додаток А. Схеми
+
+Текст додатка А.
+
+# Додаток Б - Таблиці
+
+Текст додатка Б."""
+        nodes = parse_markdown_to_nodes(md)
+        assert len(nodes) == 4
+        assert nodes[0]["type"] == "appendix_marker"
+        assert nodes[0]["label"] == "А"
+        assert nodes[1]["type"] == "paragraph"
+        assert nodes[2]["type"] == "appendix_marker"
+        assert nodes[2]["label"] == "Б"
+        assert nodes[3]["type"] == "paragraph"
+
+    def test_appendix_mixed_with_headings(self):
+        """Appendix marker should not be confused with regular heading."""
+        md = """# Розділ 1
+
+Текст розділу.
+
+# Додаток А. Схеми
+
+Текст додатка."""
+        nodes = parse_markdown_to_nodes(md)
+        assert len(nodes) == 4
+        assert nodes[0]["type"] == "heading"
+        assert nodes[0]["level"] == 1
+        assert nodes[2]["type"] == "appendix_marker"
+        assert nodes[2]["label"] == "А"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

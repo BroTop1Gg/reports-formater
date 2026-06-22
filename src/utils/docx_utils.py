@@ -32,11 +32,13 @@ def fix_table_position(table) -> None:
     parent = tbl_elem.getparent()
     if parent is not None and parent.tag.endswith('body'):
         W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
-        sectPr = parent.find(f".//{{{W_NS}}}sectPr")
+        # Only look for sectPr as a direct child of body (the final/global sectPr).
+        # Section-break sectPr elements are nested inside <w:pPr> and are NOT
+        # direct children of body, so they must be excluded.
+        sectPr = parent.find(f"{{{W_NS}}}sectPr")
         if sectPr is not None:
-            # Check if tbl is positioned after sectPr. If so, move it before sectPr.
             elements = list(parent)
-            if elements.index(tbl_elem) > elements.index(sectPr):
+            if sectPr in elements and elements.index(tbl_elem) > elements.index(sectPr):
                 parent.remove(tbl_elem)
                 sectPr.addprevious(tbl_elem)
 
@@ -318,3 +320,42 @@ def get_alignment_enum(alignment_str: str) -> WD_ALIGN_PARAGRAPH:
         "justify": WD_ALIGN_PARAGRAPH.JUSTIFY
     }
     return align_map.get(alignment_str.lower(), WD_ALIGN_PARAGRAPH.LEFT)
+
+
+def add_page_number_field(paragraph):
+    """
+    Add a PAGE number field to a paragraph via direct OXML injection.
+    
+    This helper creates the field structure: begin -> instrText (PAGE) -> separate -> end
+    Used by both ReportFactory and AppendixMarkerRenderer to avoid code duplication.
+    
+    Args:
+        paragraph: The paragraph object to add the field to.
+        
+    Returns:
+        The run object containing the field (for applying font formatting).
+    """
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+    
+    run = paragraph.add_run()
+    
+    # Field Structure: begin -> instrText (PAGE) -> separate -> end
+    fldChar1 = OxmlElement('w:fldChar')
+    fldChar1.set(qn('w:fldCharType'), 'begin')
+    run._r.append(fldChar1)
+    
+    instrText = OxmlElement('w:instrText')
+    instrText.set(qn('xml:space'), 'preserve')
+    instrText.text = "PAGE"
+    run._r.append(instrText)
+    
+    fldChar2 = OxmlElement('w:fldChar')
+    fldChar2.set(qn('w:fldCharType'), 'separate')
+    run._r.append(fldChar2)
+    
+    fldChar3 = OxmlElement('w:fldChar')
+    fldChar3.set(qn('w:fldCharType'), 'end')
+    run._r.append(fldChar3)
+    
+    return run

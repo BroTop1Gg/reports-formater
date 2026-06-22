@@ -76,3 +76,4 @@ class HeadingRenderer(BaseRenderer):
         pf.space_after = Pt(style_config.space_after_pt)
         pf.alignment = get_alignment_enum(style_config.alignment)
         pf.first_line_indent = Cm(style_config.first_line_indent_cm)  # HELL MAGIC NUMBERS AND IMPLICT LOGIC! NEVER DO THAT!
+        pf.page_break_before = style_config.page_break_before

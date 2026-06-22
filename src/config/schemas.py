@@ -151,6 +151,14 @@ class BreakData(ContentNode):
     count: int = Field(default=1, ge=1, description="Number of lines (for style=line)")
 
 
+class AppendixMarkerData(ContentNode):
+    """Appendix section marker (Додаток А)."""
+    
+    type: Literal["appendix_marker"] = "appendix_marker"
+    label: str = Field(..., description="Letter label of the appendix, e.g. А, Б, В")
+    title: Optional[str] = Field(default=None, description="Title of the appendix")
+
+
 # ============================================================
 # Union Type for Dispatch
 # ============================================================
@@ -165,6 +173,7 @@ AnyContentNode = Union[
     FormulaData,
     PageBreakData,
     BreakData,
+    AppendixMarkerData,
 ]
 
 
@@ -193,6 +202,7 @@ def parse_content_node(data: dict) -> AnyContentNode:
         "formula": FormulaData,
         "page_break": PageBreakData,
         "break": BreakData,
+        "appendix_marker": AppendixMarkerData,
     }
     
     model_class = type_map.get(node_type)

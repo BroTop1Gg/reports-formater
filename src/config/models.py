@@ -65,6 +65,7 @@ class StyleConfig(BaseModel):
     font_name: Optional[str] = Field(default=None, description="Font family name (overrides default)")
     list_level_step_cm: Optional[float] = Field(default=None, description="List level indent step")
     list_prefix_width_cm: Optional[float] = Field(default=None, description="Width allocated for list prefix (bullet/number)")
+    page_break_before: bool = Field(default=False, description="Apply native page break before this paragraph")
 
 
 class PageNumberingConfig(BaseModel):

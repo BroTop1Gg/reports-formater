@@ -36,6 +36,14 @@ class StyleManager:
         "listparagraph": "List Paragraph",
     }
     
+    # Ukrainian/Russian locale aliases for heading styles
+    # Maps normalized keys to list of possible aliases in document templates
+    STYLE_ALIASES = {
+        "heading1": ["heading1", "заголовок1", "заголовок1"],
+        "heading2": ["heading2", "заголовок2", "заголовок2"],
+        "heading3": ["heading3", "заголовок3", "заголовок3"],
+    }
+    
     def __init__(self, doc: Document):
         """
         Initialize StyleManager by scanning document styles.
@@ -150,6 +158,17 @@ class StyleManager:
                 f"StyleManager: Normalized '{requested_name}' -> '{actual_name}'"
             )
             return actual_name
+        
+        # Check locale aliases (Ukrainian/Russian "Заголовок" variants)
+        if normalized in self.STYLE_ALIASES:
+            for alias in self.STYLE_ALIASES[normalized]:
+                if alias in self._normalized_map:
+                    actual_name = self._normalized_map[alias]
+                    logger.debug(
+                        f"StyleManager: Locale alias '{alias}' resolved "
+                        f"'{requested_name}' -> '{actual_name}'"
+                    )
+                    return actual_name
         
         # Check predefined variations
         if normalized in self.NORMALIZATION_MAP:

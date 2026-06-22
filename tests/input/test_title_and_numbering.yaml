@@ -113,7 +113,6 @@ content:
       - "First numbered item"
       - "Second numbered item"
       - "Third numbered item"
-      - "Fourth numbered item"
 
   - type: heading
     level: 2
@@ -336,6 +335,14 @@ content:
     text: "Testing triple newlines:\n\n\nThis should result in two empty paragraphs between these lines."
     align: center
 
+  # TEST END: SUMMARY
+  - type: heading
+    level: 1
+    text: "TEST SUMMARY"
+
+  - type: paragraph
+    text: "If you can read this document correctly with all elements above visible, the test has PASSED. Check each section visually to confirm proper formatting."
+
   # TEST 9: APPENDICES (ДОДАТКИ)
   - type: appendix_marker
     label: "А"
@@ -354,16 +361,30 @@ content:
     label: "Б"
     title: "Додаткові таблиці"
 
+  - type: paragraph
+    text: "Цей додаток демонструє роботу колонтитулів на багатосторінкових додатках. Наступна таблиця має багато рядків, щоб примусово перенести частину контенту на наступну сторінку. На другій сторінці цього додатка вгорі має з'явитися колонтитул «Продовження додатка Б»."
+
   - type: table
-    caption: "Таблиця Б.1 — Тестова таблиця додатка"
+    caption: "Таблиця Б.1 — Велика таблиця для тесту перенесення сторінки"
     rows:
       - ["Параметр", "Значення"]
-      - ["Статус", "Успішно"]
-
-  # TEST END: SUMMARY
-  - type: heading
-    level: 1
-    text: "TEST SUMMARY"
-
-  - type: paragraph
-    text: "If you can read this document correctly with all elements above visible, the test has PASSED. Check each section visually to confirm proper formatting."
+      - ["Рядок 1", "Значення 1"]
+      - ["Рядок 2", "Значення 2"]
+      - ["Рядок 3", "Значення 3"]
+      - ["Рядок 4", "Значення 4"]
+      - ["Рядок 5", "Значення 5"]
+      - ["Рядок 6", "Значення 6"]
+      - ["Рядок 7", "Значення 7"]
+      - ["Рядок 8", "Значення 8"]
+      - ["Рядок 9", "Значення 9"]
+      - ["Рядок 10", "Значення 10"]
+      - ["Рядок 11", "Значення 11"]
+      - ["Рядок 12", "Значення 12"]
+      - ["Рядок 13", "Значення 13"]
+      - ["Рядок 14", "Значення 14"]
+      - ["Рядок 15", "Значення 15"]
+      - ["Рядок 16", "Значення 16"]
+      - ["Рядок 17", "Значення 17"]
+      - ["Рядок 18", "Значення 18"]
+      - ["Рядок 19", "Значення 19"]
+      - ["Рядок 20", "Значення 20"]

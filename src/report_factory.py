@@ -20,7 +20,7 @@ from src.services.style_manager import StyleManager
 from src.services.placeholder_service import PlaceholderService
 from src.services.rendering_service import RenderingService
 from src.utils.file_io import FailSafeSaver
-from src.utils.docx_utils import get_alignment_enum
+from src.utils.docx_utils import get_alignment_enum, add_page_number_field
 
 
 # Import all renderers
@@ -32,6 +32,7 @@ from src.renderers.image_renderer import ImageRenderer
 from src.renderers.code_block_renderer import CodeBlockRenderer
 from src.renderers.break_renderer import BreakRenderer
 from src.renderers.formula_renderer import FormulaRenderer
+from src.renderers.appendix_renderer import AppendixMarkerRenderer
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +76,7 @@ class ReportFactory:
             CodeBlockRenderer(),
             BreakRenderer(),
             FormulaRenderer(),
+            AppendixMarkerRenderer(),
         ])
     
     def build(
@@ -368,33 +370,8 @@ class ReportFactory:
                          p.clear()
 
     def _add_page_number_field(self, paragraph, config: ReportConfig):
-        """Adds a PAGE number field to a paragraph."""
-        run = paragraph.add_run()
-        
-        def create_element(name):
-            return OxmlElement(name)
-
-        def create_attribute(element, name, value):
-            element.set(qn(name), value)
-
-        # Field Structure: begin -> instrText (PAGE) -> separate -> end
-        fldChar1 = create_element('w:fldChar')
-        create_attribute(fldChar1, 'w:fldCharType', 'begin')
-        run._r.append(fldChar1)
-        
-        instrText = create_element('w:instrText')
-        create_attribute(instrText, 'xml:space', 'preserve')
-        instrText.text = "PAGE"
-        run._r.append(instrText)
-        
-        fldChar2 = create_element('w:fldChar')
-        create_attribute(fldChar2, 'w:fldCharType', 'separate')
-        run._r.append(fldChar2)
-        
-        fldChar3 = create_element('w:fldChar')
-        create_attribute(fldChar3, 'w:fldCharType', 'end')
-        run._r.append(fldChar3)
-        
+        """Adds a PAGE number field to a paragraph using the shared helper."""
+        run = add_page_number_field(paragraph)
         return run
 
     def _finalize_margins(self, doc: Document, config: ReportConfig) -> None:

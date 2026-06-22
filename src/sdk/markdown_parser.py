@@ -70,6 +70,14 @@ TABLE_CAPTION_WITH_ATTRS_PATTERN = re.compile(
     r'^Таблиця\s+([a-zA-Zа-яА-ЯёЁҐєЄіІїЇ0-9._-]+)\s*—\s*(.+?)\s*$'
 )
 
+# Appendix marker: # Додаток А. Назва or # Додаток А - Назва or # Додаток А
+# Group 1: Letter label (Cyrillic or Latin uppercase)
+# Group 2: Optional title text
+APPENDIX_PATTERN = re.compile(
+    r'^#\s*Додаток\s+([А-ЯІЇЄҐA-Z])(?:(?:\.\s*|\s*-\s*|\s+)(.*))?$',
+    re.IGNORECASE
+)
+
 
 # ============================================================
 # Core Parsing Functions
@@ -123,7 +131,24 @@ def parse_markdown_to_nodes(md_text: str) -> list[dict]:
             i += 1
             continue
 
-        # 3. Headings
+        # 3. Appendix markers: # Додаток А. Назва (must check before headings)
+        appendix_match = APPENDIX_PATTERN.match(stripped)
+        if appendix_match:
+            if pending_caption is not None:
+                nodes.append(_make_paragraph(pending_caption))
+                pending_caption = None
+            label = appendix_match.group(1).upper()
+            title = appendix_match.group(2)
+            title = title.strip() if title else None
+            nodes.append({
+                "type": "appendix_marker",
+                "label": label,
+                "title": title
+            })
+            i += 1
+            continue
+
+        # 4. Headings
         heading_match = HEADING_PATTERN.match(stripped)
         if heading_match:
             # Flush pending caption — heading is not a code/table
