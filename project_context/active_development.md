@@ -48,6 +48,29 @@
 
 ---
 
+## Phase 7: Visual Testing Expansion ✅ COMPLETE
+**Completed:** 2026-06-22
+
+- Created Markdown equivalents for all YAML test variants
+- Added test_markdown_visual.py with 3 compilation tests
+- Expanded run_tests.sh to generate 6 files (3 YAML + 3 Markdown)
+- Visual comparison pairs for side-by-side verification
+- All 83 tests pass (19.96s execution time)
+
+---
+
+## Phase 6: Appendix Support & Ukrainian Localization ✅ COMPLETE
+**Completed:** 2026-06-22
+
+- Implemented AppendixMarkerRenderer with section breaks
+- Added Ukrainian locale aliases (Заголовок → Heading)
+- Added page_break_before support in heading renderer
+- Created APPENDIX_PATTERN regex for Markdown parsing
+- Implemented page number field helper in docx_utils
+- All 83 tests pass with full E2E parity
+
+---
+
 ## Phase 5: Documentation Alignment & Tutorial Overhaul ✅ COMPLETE
 **Completed:** 2026-06-22
 
@@ -64,8 +87,8 @@
 
 ## Final Test Results Summary
 
-**Total Tests:** 73  
-**Passed:** 73  
+**Total Tests:** 83  
+**Passed:** 83  
 **Failed:** 0  
 **Success Rate:** 100%
 
@@ -77,8 +100,10 @@
 - `test_mcp_server.py`: 15 tests (MCP registration)
 - `test_sdk_session.py`: 12 tests (session API)
 - `test_cli_markdown.py`: 1 test (CLI markdown compilation)
+- `test_markdown_visual.py`: 3 tests (visual compilation)
+- `test_appendix_renderer.py`: 7 tests (appendix rendering)
 
-**Execution Time:** ~12 seconds
+**Execution Time:** ~20 seconds
 
 ---
 
