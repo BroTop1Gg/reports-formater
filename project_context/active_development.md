@@ -48,32 +48,15 @@
 
 ---
 
-## Phase 5: Cyrillic Appendix Captions & Clean Syntax ✅ COMPLETE
+## Phase 5: Documentation Alignment & Tutorial Overhaul ✅ COMPLETE
 **Completed:** 2026-06-22
 
 **Key Changes:**
-- Updated `CODE_CAPTION_PATTERN` to support Cyrillic/Latin uppercase letters (e.g., `Лістинг А.1`)
-- Updated `TABLE_CAPTION_WITH_ATTRS_PATTERN` to support Cyrillic/Latin uppercase letters (e.g., `Таблиця А.1`)
-- Removed obsolete asterisk `*` wrappers from caption syntax
-- Captions are now plain text paragraphs (e.g., `Лістинг 5.1 — Description`)
-
-**New Syntax:**
-```markdown
-Лістинг 1.1 — Python function example
-```python
-def hello():
-    print("Hello")
-```
-
-Таблиця 1.1 — Results
-| Column A | Column B |
-|----------|----------|
-| Data 1   | Data 2   |
-```
-
-**Regex Patterns:**
-- `CODE_CAPTION_PATTERN`: `r'^Лістинг\s+([a-zA-Zа-яА-ЯёЁҐєЄіІїЇ0-9._-]+)\s*—\s*(.+?)(?:\s*\(([^)]*\.[a-zA-Z0-9]+)\))?\s*$'`
-- `TABLE_CAPTION_WITH_ATTRS_PATTERN`: `r'^Таблиця\s+([a-zA-Zа-яА-ЯёЁҐєЄіІїЇ0-9._-]+)\s*—\s*(.+?)\s*$'`
+- `context/introduction.md`: Full rewrite as "Developer Onboarding & Extension Guide" with physical directory tree, service boundaries, and 7-step extension checklist
+- `context/philosophy.md`: Full rewrite reflecting "Dumb Builder Backend with Smart Transpiler Frontend" paradigm
+- `mcp_config.json.example`: Generic paths (`/absolute/path/to/reports-formater`), no private data leaked
+- `.gitignore`: Updated to ignore `*.docx`, `draft_report.yaml`, `.temp_formulas/`, `.temp_images/`; tracked `mcp_config.json.example`
+- `tutorial/report.md`: New ready-to-run ДСТУ-compliant lab report template in Natural Markdown syntax
 
 **Test Results:** ✅ 73/73 tests passing (100% success rate)
 
@@ -114,6 +97,9 @@ All phases are complete. The system is production-ready.
 - ✅ E2E structural parity (YAML ↔ Markdown)
 - ✅ Self-healing validation
 - ✅ 100% test coverage (73/73)
+- ✅ Developer onboarding guide with extension checklist
+- ✅ Philosophy documentation (Dumb Builder + Smart Transpiler)
+- ✅ Ready-to-run Markdown tutorial template
 
 **Deployment Checklist:**
 - [x] All tests passing (73/73)
@@ -122,10 +108,11 @@ All phases are complete. The system is production-ready.
 - [x] Smart Defaults working correctly
 - [x] Smart Caption Absorption validated
 - [x] Cyrillic appendix captions supported
-- [x] Documentation complete
-- [x] Configuration aligned
+- [x] Documentation complete (introduction, philosophy, architecture)
+- [x] Configuration aligned (no private paths in tracked files)
 - [x] E2E parity verified
 - [x] Self-healing validated
+- [x] Tutorial template ready
 - [ ] Production deployment
 - [ ] User acceptance testing
 - [ ] Performance benchmarking
