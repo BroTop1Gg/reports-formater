@@ -80,7 +80,7 @@ When calling `parse_inline_formatting()`, always pass these parameters:
 2.  Register it in `ReportFactory.__init__`.
 3.  Add a Pydantic schema in `src/config/schemas.py` and add it to `type_map` in `parse_content_node`.
 4.  Add test nodes to **all 3** test YAML files (`test_with_title.yaml`, `test_without_title.yaml`, `test_title_and_numbering.yaml`).
-5.  Update `familiarization/ai_system_prompt.md` and `familiarization/user_guide.md`.
+5. Update `familiarization/ai_system_prompt_yaml.md` and `familiarization/ai_system_prompt_markdown.md`, and `familiarization/user_guide.md`.
 
 ## 6. INTERACTION RULES
 *   **Clarification:** If the user request is ambiguous, ask specific questions (`[QUERY]`) before coding.

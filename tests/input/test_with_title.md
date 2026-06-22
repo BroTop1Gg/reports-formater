@@ -57,7 +57,7 @@ c. Latin item c.
 
 # TEST 4: TABLES
 
-*Таблиця 1 — Simple test table (first row should repeat on page break):*
+Таблиця 1 — Simple test table (first row should repeat on page break):
 | Column A | Column B | Column C |
 |----------|----------|----------|
 | Row 1 Cell 1<br>Line 2 | Row 1 Cell 2 | Row 1 Cell 3 |
@@ -68,7 +68,7 @@ c. Latin item c.
 
 The following should display as monospace code block:
 
-*Лістинг 1 — Python function example*
+Лістинг 1 — Python function example
 ```python
 def test_function(arg1, arg2):
     """Test docstring."""
@@ -77,7 +77,7 @@ def test_function(arg1, arg2):
     return result
 ```
 
-*Лістинг 2 — QuickSort (C language)*
+Лістинг 2 — QuickSort (C language)
 ```c
 #include <stdio.h>
 
@@ -125,7 +125,7 @@ int main() {
 }
 ```
 
-*Лістинг 3 — Native File Embedding (Relative Path) (sample_code.cs)*
+Лістинг 3 — Native File Embedding (Relative Path) (sample_code.cs)
 ```csharp
 ```
 

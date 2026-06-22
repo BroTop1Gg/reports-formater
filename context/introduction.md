@@ -1,116 +1,216 @@
-# Project Introduction & Developer Onboarding
+# Developer Onboarding & Extension Guide
 
-## 1. Project Mission
-The goal of `reports-formater` is to automate the creation of University Laboratory Reports that strictly adhere to academic standards (DSTU 3008-2015). It eliminates manual formatting work for students by generating `.docx` files from structured YAML content.
+Welcome to the `reports-formater` development workspace. This guide is the single
+source of truth for human developers and autonomous AI agents who need to understand
+the codebase layout, internal service boundaries, and the exact protocol required
+to extend the platform safely.
 
-## 2. Quick Start
-```bash
-# Install dependencies
-pip install -r requirements.txt
+---
 
-# Generate report from YAML
-python -m src.main input.yaml --output report.docx
+## 1. Physical Directory Tree
 
-# With custom template
-python -m src.main input.yaml --template title_template.docx --output report.docx
-
-# Verbose mode (debug logging)
-python -m src.main input.yaml --output report.docx -v
-```
-
-**Dependencies** (`requirements.txt`): `python-docx`, `PyYAML`, `pydantic`, `matplotlib`, `pytest`.
-
-## 3. Core Philosophy (The "Linux Way")
-*   **Modular Architecture:** The system uses a Factory pattern (`ReportFactory`) and specialized **Renderers**. Each content type (Paragraph, Table, Image, Formula, etc.) has its own dedicated handler.
-*   **Composition over Complexity:** Complex layouts (like Title Pages) are not hardcoded. They are either handled by **Templates** (preferred) or composed of atomic blocks (`page_break`, `paragraph`).
-*   **Explicit > Implicit:** If a user wants a centered caption, they explicitly set `align: center`.
-*   **Configuration-Driven:** Fonts, sizes, spacing, and alignment are managed entirely in `report_styles.json`. The code does not hardcode visual properties.
-
-## 4. Architecture Overview
-The project follows a **Template Strategy**:
-1.  **Input:** YAML file (Content + Metadata).
-2.  **Base:** Existing `.docx` Template (contains Title Page, Margins).\
-    If no template — uses `DEFAULT_TEMPLATE.docx` (a minimal fallback for styles).
-3.  **Process:**
-    *   Load Template.
-    *   Inject Metadata (`{{STUDENT}}` -> "Ivanov") via `PlaceholderService`.
-    *   Append Content (Headings, Text, Tables, Code, Images, Formulas) to the end.
-    *   Configure Header/Footer (text + page numbering) using `header_footer` style.
-4.  **Output:** Final Report `.docx`.
-
-## 5. Project Structure
-```
+```text
 reports-formater/
-├── src/
-│   ├── main.py                  # CLI entry point (argparse)
-│   ├── report_factory.py         # Orchestrator, header/footer, page layout
-│   ├── report_styles.json        # Global style configuration
-│   ├── DEFAULT_TEMPLATE.docx     # Fallback template for Word styles
+│
+├── context/                          # Architectural decisions & developer guides
+│   ├── ARCHITECTURE.md               # 4-layer system boundaries and data flow
+│   ├── code_style.md                 # Python conventions & intervention safety rules
+│   ├── introduction.md               # THIS FILE — onboarding & extension guide
+│   ├── philosophy.md                 # Dumb Builder vs Smart Transpiler paradigm
+│   └── todo.txt                      # Working notes / scratch
+│
+├── familiarization/                  # System manuals & AI generation guidelines
+│   ├── ai_system_prompt_yaml.md      # Reference prompt for YAML-driven AI generation
+│   ├── ai_system_prompt_markdown.md  # Reference prompt for Markdown-driven AI generation
+│   └── user_guide.md                 # Complete user manual (CLI, SDK, MCP)
+│
+├── project_context/                  # Project management & memory
+│   ├── active_development.md         # Current phase status & test results
+│   ├── memory.md                     # Durable changelog ledger (lessons, decisions)
+│   ├── project_overview.md           # High-level project summary
+│   ├── system_design.md              # Detailed system design notes
+│   └── tech_environment.md           # Toolchain & dependency versions
+│
+├── src/                              # Production codebase
 │   ├── config/
-│   │   ├── models.py             # Pydantic config models (ReportConfig, StyleConfig)
-│   │   ├── loader.py             # Config loading & merging
-│   │   └── schemas.py            # YAML content node validation
-│   ├── renderers/
-│   │   ├── base.py               # BaseRenderer, RenderContext, ContentContainer
-│   │   ├── paragraph_renderer.py
-│   │   ├── heading_renderer.py
-│   │   ├── list_renderer.py
-│   │   ├── table_renderer.py
-│   │   ├── image_renderer.py
-│   │   ├── code_block_renderer.py
-│   │   ├── formula_renderer.py
-│   │   └── break_renderer.py
-│   ├── services/
-│   │   ├── rendering_service.py  # Renderer registry & dispatch
-│   │   ├── spacing_engine.py     # DSTU spacing rules
-│   │   ├── style_manager.py      # Word style fuzzy matching
-│   │   └── placeholder_service.py
-│   └── utils/
-│       ├── docx_utils.py         # OXML helpers, get_alignment_enum
-│       ├── formatting.py         # Inline markdown parser
-│       └── file_io.py            # FailSafeSaver
-├── tests/
-│   ├── input/                    # Test YAML files & assets
-│   ├── output/                   # Generated test reports
-│   └── run_tests.sh              # Test runner script
-├── context/                      # Architecture & developer docs
-├── familiarization/              # User guide & AI system prompt
-└── requirements.txt
+│   │   ├── __init__.py
+│   │   ├── models.py                 # Typed Pydantic configuration models (Layer 1)
+│   │   ├── loader.py                 # Layered config loader with deep merge
+│   │   └── schemas.py                # AST node Pydantic V2 schemas (Layer 2)
+│   │
+│   ├── sdk/
+│   │   ├── __init__.py
+│   │   ├── session.py                # ReportSession state manager (Layer 2)
+│   │   └── markdown_parser.py        # Natural Markdown → AST transpiler (Layer 3)
+│   │
+│   ├── renderers/                    # Specialized OXML visual writers (Layer 1)
+│   │   ├── __init__.py
+│   │   ├── base.py                   # BaseRenderer + RenderContext protocols
+│   │   ├── paragraph_renderer.py     # Standard text paragraphs
+│   │   ├── heading_renderer.py       # Headings with TOC support
+│   │   ├── list_renderer.py          # Bullet, numbered, alpha (Cyrillic/Latin)
+│   │   ├── table_renderer.py         # Grid tables with caption + header repeat
+│   │   ├── image_renderer.py         # Images + invisible layout tables
+│   │   ├── code_block_renderer.py    # Monospaced code listings with captions
+│   │   ├── formula_renderer.py       # LaTeX → PNG → embedded images
+│   │   └── break_renderer.py         # Page breaks, line breaks, section breaks
+│   │
+│   ├── services/                     # Layer 1 support services
+│   │   ├── __init__.py
+│   │   ├── rendering_service.py      # Renderer registry + Strategy dispatcher
+│   │   ├── spacing_engine.py         # DSTU-compliant margin collapsing
+│   │   ├── style_manager.py          # Fuzzy matching for MS Word XML style IDs
+│   │   └── placeholder_service.py    # Cascade {{KEY}} replacement in templates
+│   │
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   ├── docx_utils.py             # OXML manipulation (invisible tables, borders)
+│   │   ├── file_io.py                # FailSafeSaver — retry + timestamped rename
+│   │   └── formatting.py             # Inline markdown bold/italic/code formatter
+│   │
+│   ├── mcp_server_yaml.py            # Structured YAML MCP Stdio interface (Layer 4)
+│   ├── mcp_server_markdown.py        # Natural Markdown MCP Stdio interface (Layer 4)
+│   ├── main.py                       # Consolidated CLI entry point (Layer 4)
+│   ├── report_factory.py             # Top-level orchestrator (Layer 1)
+│   ├── report_styles.json            # Visual identity config (fonts, margins, spacing)
+│   └── DEFAULT_TEMPLATE.docx         # Empty default OXML template
+│
+├── tests/                            # Test pyramid
+│   ├── conftest.py                   # Shared fixtures
+│   ├── input/                        # Reference test documents & templates
+│   ├── output/                       # Compiled test output (gitignored)
+│   ├── assets/                       # Test images
+│   ├── test_markdown_parser.py       # Unit tests for Layer 3 transpiler
+│   ├── test_sdk_session.py           # Unit tests for Layer 2 SDK session
+│   ├── test_mcp_server.py            # Unit tests for Layer 4 MCP wrappers
+│   ├── test_mcp_transport.py         # Stdio JSON-RPC 2.0 integration tests
+│   ├── test_self_healing_sim.py      # Real-time validation & self-healing tests
+│   ├── test_cli_markdown.py          # CLI integration tests
+│   ├── test_e2e_identity.py          # E2E structural parity (YAML ↔ Markdown)
+│   ├── run_tests.sh                  # Bash test runner
+│   └── run_tests.bat                 # Windows test runner
+│
+├── tutorial/                         # Ready-to-run example documents
+│   ├── report.md                     # Markdown tutorial template (ДСТУ lab report)
+│   ├── report.yaml                   # Legacy YAML tutorial template
+│   ├── TUTORIAL.md                   # Tutorial usage instructions
+│   └── tasks.txt                     # Tutorial exercise tasks
+│
+├── other/                            # Reference materials (standards, images)
+├── .gitignore                        # Git ignore rules
+├── mcp_config.json                   # Local MCP config (PRIVATE — gitignored)
+├── mcp_config.json.example           # Template MCP config (TRACKED — generic paths)
+├── requirements.txt                  # Python dependencies
+├── LICENSE                           # Project license
+└── README.md                         # Project overview & quick start
 ```
 
-## 6. Key Components
-*   `src/report_factory.py`: Main orchestrator. Loads template, coordinates rendering, configures header/footer and page layout.
-*   `src/services/rendering_service.py`: Dispatches content to registered renderers.
-*   `src/renderers/base.py`: Core abstractions (`BaseRenderer`, `RenderContext`, `ContentContainer`).
-*   `src/renderers/`: Atomic handlers for each content type:
-    *   `paragraph_renderer.py` — Text with inline formatting.
-    *   `heading_renderer.py` — Heading levels with TOC styles.
-    *   `list_renderer.py` — Bullet, numbered, `alpha_cyrillic` (а, б, в), `alpha_latin` (a, b, c).
-    *   `table_renderer.py` — Grid tables with header repetition.
-    *   `image_renderer.py` — Images with alignment, captions, placeholders.
-    *   `code_block_renderer.py` — Monospace code blocks with repeating captions.
-    *   `formula_renderer.py` — LaTeX formulas (matplotlib + system LaTeX fallback).
-    *   `break_renderer.py` — Page breaks, line breaks.
-*   `src/config/models.py`: Pydantic configuration models (fonts, styles, margins).
-*   `src/config/schemas.py`: Pydantic validation schemas for YAML content nodes.
-*   `src/config/loader.py`: Loads and merges JSON config with YAML overrides.
-*   `src/report_styles.json`: Global style configuration (fonts, spacing, indents, alignment per style).
-*   `src/utils/docx_utils.py`: OXML helpers (borders, alignment, table optimization).
-*   `src/utils/formatting.py`: Inline markdown parser for runs (`**bold**`, `*italic*`, `` `code` ``).
+---
 
-## 7. Technical Specifics (DSTU 3008-2015 Compliance)
-*   **Headings:** Level 1 must be Uppercase (User responsibility in YAML).
-*   **Lists:** Support for `bullet`, `numbered`, `alpha_cyrillic` (Cyrillic `а)`, `б)`), and `alpha_latin` (Latin `a.`, `b.`). Indexing extends beyond alphabet (аа, аб, etc.).
-*   **Tables:** Grid style. **Header Row Repetition** is enforced via OXML (`<w:tblHeader>`).
-*   **Page Numbering:** Configured via `report_styles.json` or YAML override. Supports "Spread" layout (text left, number right) with tab stops.
-*   **Fonts:** Each style can define its own `font_name` in `report_styles.json`, enabling font changes without touching code.
+## 2. Core Service Boundaries
 
-## 8. How to Contribute
-*   **Verify:** Always run tests after changes (`bash tests/run_tests.sh`). Don't forget to add new functionality to **all 3** test YAML files.
-*   **Style:** Follow `context/code_style.md`.
-*   **Docs:** Update `familiarization/ai_system_prompt.md` and `familiarization/user_guide.md` if adding new YAML features.
+### `ReportFactory` (`src/report_factory.py`)
+The top-level orchestrator. Owns the full document lifecycle:
+- Loads and deep-merges configuration (`ConfigLoader` → `report_styles.json` → metadata overrides).
+- Loads the `.docx` template (CLI arg → YAML metadata → `DEFAULT_TEMPLATE.docx`).
+- Configures page margins, headers, footers, and page numbering.
+- Replaces `{{PLACEHOLDER}}` tags via `PlaceholderService` (cascade: run-level → paragraph-level).
+- Parses content dicts into Pydantic nodes, applies `SpacingEngine`, then flushes to `RenderingService`.
+- Saves output via `FailSafeSaver` (retry + timestamped rename if file is locked).
 
-## 9. See Also
-*   **[philosophy.md](philosophy.md):** Core design principles ("Dumb Builder", "Explicit > Implicit").
-*   **[code_style.md](code_style.md):** Python coding standards and project-specific conventions.
-*   **[ARCHITECTURE.md](ARCHITECTURE.md):** Detailed system architecture with data flow diagram.
+### `SpacingEngine` (`src/services/spacing_engine.py`)
+Automates DSTU-compliant inter-block spacing. Implements margin collapsing:
+- Reads spacing rules from `config.spacing_rules` (data-driven, not hardcoded).
+- Injects explicit `break` nodes between adjacent content nodes when needed.
+- Ensures consistent vertical rhythm across all block type transitions.
+
+### `PlaceholderService` (`src/services/placeholder_service.py`)
+Searches and replaces `{{KEY}}` tags inside `.docx` XML runs:
+- **Cascade Strategy:** First attempts run-level replacement (preserves inline formatting).
+- Falls back to paragraph-level replacement if MS Word splits the tag across multiple runs.
+- Supports flat metadata and nested `mapping` dicts for backward compatibility.
+
+### `docx_utils` (`src/utils/docx_utils.py`)
+The single source of truth for low-level OXML manipulation:
+- Constructs invisible borderless tables for anchoring images/formulas/listings side-by-side with captions.
+- Provides `get_alignment_enum()` — the only allowed way to resolve alignment strings to `WD_ALIGN_PARAGRAPH` values.
+- Handles border creation, cell merging, and namespace-qualified XML element construction.
+
+---
+
+## 3. How to Add a New Visual Block / Renderer
+
+Follow this strict step-by-step checklist. Skipping any step risks breaking the
+AST contract, the renderer registry, or the test suite.
+
+### Step 1 — Define the AST Schema (`src/config/schemas.py`)
+Create a new Pydantic model inheriting from `ContentNode`:
+```python
+class ChartData(ContentNode):
+    type: Literal["chart"] = "chart"
+    data: List[float] = Field(...)
+    caption: Optional[str] = None
+```
+- Add it to the `AnyContentNode` union type.
+- Register it in the `type_map` dict inside `parse_content_node()`.
+
+### Step 2 — Add Configuration (if visual parameters needed)
+- Add fields to `src/config/models.py` (inside `StyleConfig` or `ReportConfig`).
+- Add matching values to `src/report_styles.json` with sensible defaults.
+
+### Step 3 — Implement the Renderer (`src/renderers/`)
+Create `src/renderers/chart_renderer.py`:
+```python
+from src.renderers.base import BaseRenderer, RenderContext
+
+class ChartRenderer(BaseRenderer):
+    node_type = "chart"
+
+    def render(self, context: RenderContext, data: ChartData) -> None:
+        # OXML writing logic here
+        ...
+```
+- Inherit from `BaseRenderer`.
+- Implement `node_type` (class attribute) and `render(context, data)`.
+- Use `docx_utils` for any invisible table / border construction.
+- Use `get_alignment_enum()` from `docx_utils` for alignment — never a local dict.
+
+### Step 4 — Register the Renderer (`src/report_factory.py`)
+Add the import and register in `ReportFactory.__init__`:
+```python
+from src.renderers.chart_renderer import ChartRenderer
+
+self._rendering_service.register_all([
+    ...existing renderers...,
+    ChartRenderer(),
+])
+```
+
+### Step 5 — Update the Markdown Transpiler (if applicable)
+If the new block can be authored in Markdown, add its regex pattern and parsing
+logic to `src/sdk/markdown_parser.py`:
+- Define a compiled regex pattern at module level.
+- Add a parsing branch in `parse_markdown_to_nodes()`.
+- Apply Smart Defaults (alignment, sizing) in the transpiler, NOT the renderer.
+
+### Step 6 — Add Test Coverage
+Add test instances of the new block to **all** reference test files:
+- `tests/input/test_with_title.yaml`
+- `tests/input/test_without_title.yaml`
+- `tests/input/test_with_title.md`
+- Add unit tests in the appropriate `tests/test_*.py` file.
+
+### Step 7 — Run Regression Tests
+```bash
+python -m pytest tests/ -v
+```
+Verify 100% pass rate with zero blast radius on existing tests.
+
+---
+
+## 4. Coding Conventions
+
+All developers and AI agents MUST strictly adhere to:
+- [`context/code_style.md`](code_style.md) — Python conventions & intervention safety rules.
+- [`context/philosophy.md`](philosophy.md) — The Dumb Builder vs Smart Transpiler paradigm.
+- [`context/ARCHITECTURE.md`](ARCHITECTURE.md) — The 4-layer stateful/stateless execution flow.

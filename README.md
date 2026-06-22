@@ -19,9 +19,9 @@ Putin idi nachui.
 
 ## About The Project
 
-Formatting technical documentation and academic reports strictly adhering to local standards (e.g., DSTU 3008-2015) is a highly time-consuming process. Manual formatting in word processors often leads to formatting errors, broken cross-references, and lost time on styling rather than content creation. In adition formating of reports currently is the onliest bottleneck for working with an AI.
+Formatting technical documentation and academic reports strictly adhering to local standards (e.g., DSTU 3008-2015) is a highly time-consuming process. Manual formatting in word processors often leads to formatting errors, broken cross-references, and lost time on styling rather than content creation. In addition, formatting of reports currently is the only bottleneck for working with an AI.
 
-**Reports-Formater** is a CLI-based tool designed to fully automate the generation of `.docx` documents from structured YAML content.
+**Reports-Formater** is an AI-native, dual-protocol document compiler designed to fully automate the generation of `.docx` documents from structured YAML or natural academic Markdown content.
 
 ### Designed for AI CLI-Agents
 
@@ -31,13 +31,14 @@ By using this tool, CLI-Agents (such as Qwen, Gemini, etc.) can generate technic
 
 ## Features
 
-- **Dual-Protocol Gateway:** Choose between YAML (structured) or Markdown (natural) input formats.
-- **MCP Integration:** Native Model Context Protocol servers for seamless AI client integration (Cursor, Claude Desktop).
+- **Dual-Protocol Gateway:** Choose between structured YAML or natural academic Markdown-First input formats.
+- **MCP Integration:** Native Model Context Protocol (stdio transport) servers for seamless AI client integration (Claude Desktop, etc.).
 - **YAML-Driven Content:** Write your paragraphs, headings, lists, tables, code blocks, and formulas in structured YAML.
-- **Markdown-First Mode:** Write reports in natural Pandoc-style Markdown with automatic transpilation to internal AST.
+- **Markdown-First Mode:** Write reports in natural Pandoc-style Markdown (no visual formatting tags) with automatic transpilation to internal AST.
+- **Programmatic Python SDK:** Seamlessly integrate the stateful document buffer (`ReportSession`) directly into your own custom Python pipelines.
 - **Strict Compliance:** Automated enforcement of heading styles, paragraph spacing, and page numbering layouts.
 - **Complex Structures:** Support for repeating table headers across pages, code block captions, and multi-level alphabetic lists.
-- **Formula Rendering:** Advanced mathematical formulas using a two-tier hybrid system (Matplotlib + System LaTeX).
+- **Formula Rendering:** Advanced mathematical formulas using a two-tier hybrid system (Matplotlib + System LaTeX with full Cyrillic support).
 - **Template Support:** Use `.docx` templates with placeholders (e.g., `{{TITLE}}`, `{{AUTHOR}}`) to automatically generate complex title pages.
 
 ### Compatibility Note
@@ -55,7 +56,7 @@ The generated `.docx` files use advanced OXML structures.
 pip install -r requirements.txt
 ```
 
-The `requirements.txt` includes: `python-docx`, `PyYAML`, `pydantic`, `matplotlib`, `pytest`.
+The `requirements.txt` includes: `python-docx`, `PyYAML`, `pydantic`, `matplotlib`, `pytest`, `mcp`.
 Requires **Python 3.10+**.
 
 ### LaTeX Support (Optional but Recommended)
@@ -66,22 +67,29 @@ For rendering mathematical formulas, this project uses a two-tier strategy:
 
 If system LaTeX is not installed, complex formulas will be rendered as text placeholders.
 
-**To install LaTeX:**
+**To install LaTeX with Cyrillic support:**
 ```bash
 # Ubuntu / Debian
-sudo apt install texlive-full
+sudo apt install texlive-full texlive-lang-cyrillic
 ```
 Ensure that `latex` and `dvipng` are accessible in your `$PATH`.
 
 ## Usage
 
-### CLI Execution
+### 1. CLI Execution
 
-Generate a report from a YAML file:
+#### Compile YAML Content:
 ```bash
 python -m src.main input.yaml --output report.docx
 ```
 
+#### Compile Natural Markdown (with YAML Front-Matter):
+Write your metadata inside `---` delimiters at the very top of your `.md` file, then compile it directly:
+```bash
+python -m src.main input.md --output report.docx
+```
+
+#### Other CLI Arguments:
 Generate using a specific title page template:
 ```bash
 python -m src.main input.yaml --template title_template.docx --output report.docx
@@ -92,16 +100,36 @@ Verbose mode for debugging:
 python -m src.main input.yaml --output report.docx -v
 ```
 
-### AI Integration
+### 2. Programmatic Python SDK
+
+You can use the stateful SDK inside your own custom Python scripts to build reports incrementally in memory:
+
+```python
+from pathlib import Path
+from src.sdk.session import ReportSession
+
+# Initialize session with metadata
+session = ReportSession(metadata={"VERSION": "1.0", "CURRENT_YEAR": "2026"})
+
+# Add Markdown chunk (Smart Defaults and Caption Absorption are applied automatically)
+session.add_markdown_chunk("# ЛАБОРАТОРНА РОБОТА № 5")
+session.add_markdown_chunk("Тема: Розробка ПЗ.\n\nМета: Дослідити...")
+
+# Finalize and compile .docx
+output_path = Path("output.docx")
+session.finalize(output_path)
+```
+
+### 3. AI Integration (Legacy File Method)
 
 To generate documents using an LLM:
-1. Provide the LLM with the prompt found in `familiarization/ai_system_prompt.md`.
-2. The AI will output a correctly structured YAML file.
-3. Pass the generated YAML file to this CLI tool to build the Word document.
+1. Provide the LLM with the prompt found in `familiarization/ai_system_prompt_yaml.md` or `familiarization/ai_system_prompt_markdown.md`.
+2. The AI will output a correctly structured file.
+3. Pass the generated file to this CLI tool to build the Word document.
 
-Or, if you using CLI-Agent, they can automatically create files and run the tool. But you also need give them instructions to do that `familiarization/ai_system_prompt.md`, `familiarization/user_guide.md`.
+Or, if you using CLI-Agent, they can automatically create files and run the tool. But you also need give them instructions to do that `familiarization/ai_system_prompt_markdown.md`, `familiarization/user_guide.md`.
 
-### Dual-Protocol Gateway (MCP Integration)
+### 4. Dual-Protocol Gateway (MCP Integration)
 
 The project provides two Model Context Protocol (MCP) servers for seamless AI client integration:
 
@@ -111,7 +139,7 @@ For structured, schema-driven content generation:
 python -m src.mcp_server_yaml
 ```
 - Exposes tools: `init_report`, `submit_chunk`, `finalize_report`
-- Resource: `dstu://guidelines` (YAML schema reference)
+- Resource: `dstu://guidelines` (YAML schema reference `ai_system_prompt_yaml.md`)
 - Best for: Precise control over document structure
 
 #### Markdown Protocol Server
@@ -120,39 +148,55 @@ For natural, Pandoc-style Markdown input:
 python -m src.mcp_server_markdown
 ```
 - Exposes tools: `init_report`, `submit_markdown_chunk`, `finalize_report`
-- Resource: `dstu://guidelines` (Markdown syntax reference)
+- Resource: `dstu://guidelines` (Markdown syntax reference `ai_system_prompt_markdown.md`)
 - Best for: Writing reports in natural Markdown with automatic transpilation
 
-#### Client Configuration
+#### Client Configuration (mcp_config.json)
+We provide `mcp_config.json.example` as a template. Rename it to `mcp_config.json`, configure your absolute paths, and register it in your MCP host (like Claude Desktop).
 
-**Cursor:**
-1. Open Settings → Features → MCP
-2. Click "Add MCP Server"
-3. Select "Command" type
-4. Name: `reports-formater-yaml` or `reports-formater-markdown`
-5. Command: `python -m src.mcp_server_yaml` or `python -m src.mcp_server_markdown`
-6. Working directory: your project root
-
-**Claude Desktop:**
-Edit `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "reports-formater-yaml": {
-      "command": "python",
+    "reports-formatter-yaml": {
+      "command": "/path/to/reports-formater/venv/bin/python",
       "args": ["-m", "src.mcp_server_yaml"],
-      "cwd": "/path/to/reports-formater"
+      "env": {
+        "PYTHONPATH": "/path/to/reports-formater"
+      }
     },
-    "reports-formater-markdown": {
-      "command": "python",
+    "reports-formatter-markdown": {
+      "command": "/path/to/reports-formater/venv/bin/python",
       "args": ["-m", "src.mcp_server_markdown"],
-      "cwd": "/path/to/reports-formater"
+      "env": {
+        "PYTHONPATH": "/path/to/reports-formater"
+      }
     }
   }
 }
 ```
 
 Both servers provide real-time validation, stateful session management, and automatic .docx generation through the MCP protocol.
+
+---
+
+## AI Autopilot Developer Integration (Aashari/Aider Protocol)
+
+This repository is designed from the ground up to be maintained and extended by **autonomous developer agents** (such as Hermes Agent, Claude Code, etc.).
+
+We maintain a strict stateful context directory to allow any incoming agent to instantly align with our codebase constraints:
+- `project_context/project_overview.md` - Product goals and constraints.
+- `project_context/system_design.md` - Multi-layered architecture boundaries.
+- `project_context/tech_environment.md` - Absolute paths and testing scripts.
+- `project_context/active_development.md` - Current sprint progress and steps.
+- `project_context/memory.md` - Historical log of key architectural decisions.
+
+### Initializing Agent Soul
+To prevent agentic token-wasting paranoia and enforce pragmatic, cost-efficient co-authoring, always copy our customized agent doctrine to your global agent environment before initiating a coding session:
+```bash
+cp project_context/SOUL.md ~/.hermes/SOUL.md
+```
+
+---
 
 ## Try it Yourself (Tutorial)
 
@@ -162,7 +206,7 @@ If you ever need help understanding how this project works, simply copy the foll
 - [`context/ARCHITECTURE.md`](context/ARCHITECTURE.md)
 - [`context/introduction.md`](context/introduction.md)
 - [`familiarization/user_guide.md`](familiarization/user_guide.md)
-- [`familiarization/ai_system_prompt.md`](familiarization/ai_system_prompt.md)
+- [`familiarization/ai_system_prompt_markdown.md`](familiarization/ai_system_prompt_markdown.md)
 
 ## Documentation
 
@@ -177,14 +221,16 @@ For developers, contributors, and AI agents analyzing this repository, refer to 
 | [`context/philosophy.md`](context/philosophy.md) | Core design principles ("Dumb Builder") and anti-patterns |
 | [`familiarization/ai_system_prompt_yaml.md`](familiarization/ai_system_prompt_yaml.md) | System prompt for LLMs to generate YAML content |
 | [`familiarization/ai_system_prompt_markdown.md`](familiarization/ai_system_prompt_markdown.md) | System prompt for LLMs to generate Markdown content |
-| [`familiarization/user_guide.md`](familiarization/user_guide.md) | Syntax guide for YAML nodes and supported features |
-| [`familiarization/DSTU_3008-15.md`](familiarization/DSTU_3008-15.md) | Extracts from the DSTU 3008-2015 standard |
+| [`familiarization/user_guide.md`](familiarization/user_guide.md) | Comprehensive System Manual (CLI, SDK, and MCP) |
+| [`other/derzhstandart_3008_2015.pdf`](other/derzhstandart_3008_2015.pdf) | Official DSTU 3008-2015 Ukrainian Standard specification (PDF) |
 
 ## Acknowledgements
 
-Artificial Intelligence played a significant role in the development of this project. AI models were helping to design the architecture, write the documentation, implement tests, and solve complex layout challenges (like the image insertion into a table, for formula alignment or working with headers/footers).
+Artificial Intelligence played a significant role in the development and maintenance of this project. AI models helped to design the architecture, write the documentation, implement tests, and solve complex layout challenges.
 
 Models used during development:
+- **Qwen 3.7 Plus** (Fireworks.ai)
+- **Hermes Agent**
 - Gemini 3.1 Pro, Gemini 3.0 Pro, Gemini 3.0 Flash
 - Claude Opus 4.6 Thinking, Claude Sonnet 4.5 Thinking
 

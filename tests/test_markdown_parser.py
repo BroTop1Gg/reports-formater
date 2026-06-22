@@ -64,8 +64,8 @@ class TestSmartCaptionAbsorption:
     """Test Smart Caption Absorption for code blocks and tables."""
 
     def test_listing_caption_absorption(self):
-        """Italic caption before code block should be absorbed."""
-        md = """*Лістинг 1.1 — Приклад коду*
+        """Listing caption before code block should be absorbed."""
+        md = """Лістинг 1.1 — Приклад коду
 ```python
 def hello():
     print("Hello")
@@ -77,8 +77,8 @@ def hello():
         assert nodes[0]["language"] == "python"
 
     def test_listing_caption_with_path(self):
-        """Italic caption with path should be absorbed."""
-        md = """*Лістинг 2.1 — Конфігурація (config.yaml)*
+        """Listing caption with path should be absorbed."""
+        md = """Лістинг 2.1 — Конфігурація (config.yaml)
 ```yaml
 key: value
 ```"""
@@ -91,20 +91,20 @@ key: value
         assert nodes[0]["path"] == "config.yaml"
 
     def test_listing_caption_not_followed_by_code(self):
-        """Italic caption not followed by code should become paragraph."""
-        md = """*Лістинг 1.1 — Приклад коду*
+        """Listing caption not followed by code should become paragraph."""
+        md = """Лістинг 1.1 — Приклад коду
 
 Звичайний текст після."""
         nodes = parse_markdown_to_nodes(md)
         assert len(nodes) == 2
         assert nodes[0]["type"] == "paragraph"
-        # The caption should be stripped of asterisks
+        # The caption should be preserved as text
         assert "Лістинг 1.1 — Приклад коду" in nodes[0]["text"]
         assert nodes[1]["type"] == "paragraph"
 
     def test_table_caption_absorption(self):
-        """Italic caption before table should be absorbed."""
-        md = """*Таблиця 1.1 — Результати тестів*
+        """Table caption before table should be absorbed."""
+        md = """Таблиця 1.1 — Результати тестів
 | Тест | Результат |
 |------|-----------|
 | A    | Pass      |
@@ -115,14 +115,14 @@ key: value
         assert nodes[0]["caption"] == "Таблиця 1.1 — Результати тестів"
 
     def test_table_caption_not_followed_by_table(self):
-        """Italic table caption not followed by table should become paragraph."""
-        md = """*Таблиця 1.1 — Результати тестів*
+        """Table caption not followed by table should become paragraph."""
+        md = """Таблиця 1.1 — Результати тестів
 
 Звичайний текст після."""
         nodes = parse_markdown_to_nodes(md)
         assert len(nodes) == 2
         assert nodes[0]["type"] == "paragraph"
-        # The caption should be stripped of asterisks
+        # The caption should be preserved as text
         assert "Таблиця 1.1 — Результати тестів" in nodes[0]["text"]
         assert nodes[1]["type"] == "paragraph"
 
@@ -366,12 +366,12 @@ class TestComplexDocument:
 
 ## 1.1 Основна частина
 
-*Лістинг 1.1 — Приклад*
+Лістинг 1.1 — Приклад
 ```python
 print("Hello")
 ```
 
-*Таблиця 1.1 — Дані*
+Таблиця 1.1 — Дані
 | A | B |
 |---|---|
 | 1 | 2 |

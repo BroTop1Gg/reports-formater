@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "reports-formatter-yaml": {
+      "command": "/absolute/path/to/reports-formater/venv/bin/python",
+      "args": [
+        "/absolute/path/to/reports-formater/src/mcp_server_yaml.py"
+      ],
+      "env": {
+        "PYTHONPATH": "/absolute/path/to/reports-formater"
+      }
+    },
+    "reports-formatter-markdown": {
+      "command": "/absolute/path/to/reports-formater/venv/bin/python",
+      "args": [
+        "/absolute/path/to/reports-formater/src/mcp_server_markdown.py"
+      ],
+      "env": {
+        "PYTHONPATH": "/absolute/path/to/reports-formater"
+      }
+    }
+  }
+}

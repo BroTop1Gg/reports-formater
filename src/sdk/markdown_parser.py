@@ -55,17 +55,19 @@ TABLE_ROW_PATTERN = re.compile(r'^\|(.+)\|$')
 TABLE_SEPARATOR_PATTERN = re.compile(r'^\|[\s\-:|]+\|$')
 
 # Smart Caption Absorption patterns
-# Code listing caption: *Лістинг 5.1 — Name* or *Лістинг 5.1 — Name (path)*
-# Group 1: Full caption text (without asterisks)
+# Code listing caption: Лістинг 5.1 — Name or Лістинг 5.1 — Name (path)
+# Group 1: Listing number (e.g., "5.1" or "А.1")
 # Group 2: Caption text only (without path)
 # Group 3: Optional path in parentheses (must contain file extension)
-LISTING_CAPTION_PATTERN = re.compile(
-    r'^\*(Лістинг\s+\d+(?:\.\d+)*\s*—\s*(.+?))\s*(?:\(([^)]*\.[a-zA-Z0-9]+)\))?\*$'
+CODE_CAPTION_PATTERN = re.compile(
+    r'^Лістинг\s+([a-zA-Zа-яА-ЯёЁҐєЄіІїЇ0-9._-]+)\s*—\s*(.+?)(?:\s*\(([^)]*\.[a-zA-Z0-9]+)\))?\s*$'
 )
 
-# Table caption: *Таблиця 1.1 — Name*
-TABLE_CAPTION_ABSORB_PATTERN = re.compile(
-    r'^\*(Таблиця\s+\d+(?:\.\d+)*\s*—\s*[^*]+)\*$'
+# Table caption: Таблиця 1.1 — Name
+# Group 1: Table number (e.g., "1.1" or "А.1")
+# Group 2: Caption text
+TABLE_CAPTION_WITH_ATTRS_PATTERN = re.compile(
+    r'^Таблиця\s+([a-zA-Zа-яА-ЯёЁҐєЄіІїЇ0-9._-]+)\s*—\s*(.+?)\s*$'
 )
 
 
@@ -138,15 +140,15 @@ def parse_markdown_to_nodes(md_text: str) -> list[dict]:
             i += 1
             continue
 
-        # 4. Smart Caption Absorption: check for italic caption lines
-        listing_cap = LISTING_CAPTION_PATTERN.match(stripped)
+        # 4. Smart Caption Absorption: check for caption lines
+        listing_cap = CODE_CAPTION_PATTERN.match(stripped)
         if listing_cap:
             # Store as pending — will be consumed by next code block
-            pending_caption = stripped  # Store the full italic line for later extraction
+            pending_caption = stripped  # Store the full caption line for later extraction
             i += 1
             continue
 
-        table_cap = TABLE_CAPTION_ABSORB_PATTERN.match(stripped)
+        table_cap = TABLE_CAPTION_WITH_ATTRS_PATTERN.match(stripped)
         if table_cap:
             pending_caption = stripped
             i += 1
@@ -175,9 +177,11 @@ def parse_markdown_to_nodes(md_text: str) -> list[dict]:
 
             # Smart Caption Absorption: consume pending caption
             if pending_caption is not None:
-                cap_match = LISTING_CAPTION_PATTERN.match(pending_caption)
+                cap_match = CODE_CAPTION_PATTERN.match(pending_caption)
                 if cap_match:
-                    node["caption"] = cap_match.group(1).strip()
+                    number = cap_match.group(1)
+                    text = cap_match.group(2).strip()
+                    node["caption"] = f"Лістинг {number} — {text}"
                     path = cap_match.group(3)
                     if path:
                         node["path"] = path.strip()
@@ -325,9 +329,11 @@ def _parse_table(
 
     # Smart Caption Absorption from pending state
     if pending_caption is not None:
-        cap_match = TABLE_CAPTION_ABSORB_PATTERN.match(pending_caption)
+        cap_match = TABLE_CAPTION_WITH_ATTRS_PATTERN.match(pending_caption)
         if cap_match:
-            caption = cap_match.group(1).strip()
+            number = cap_match.group(1)
+            text = cap_match.group(2).strip()
+            caption = f"Таблиця {number} — {text}"
             consumed = True
 
     # Parse table rows
@@ -488,8 +494,8 @@ def _parse_paragraph(lines: list[str], start: int) -> Optional[dict]:
             BREAK_PATTERN.match(stripped) or
             LINE_BREAK_PATTERN.match(stripped) or
             TABLE_ROW_PATTERN.match(stripped) or
-            LISTING_CAPTION_PATTERN.match(stripped) or
-            TABLE_CAPTION_ABSORB_PATTERN.match(stripped)):
+            CODE_CAPTION_PATTERN.match(stripped) or
+            TABLE_CAPTION_WITH_ATTRS_PATTERN.match(stripped)):
             break
 
         style, _ = _detect_list_style(line)

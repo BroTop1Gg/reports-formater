@@ -1,134 +1,122 @@
 # System Architecture
 
-## Overview
-The `reports-formater` project uses a modular, extensible architecture based on **Service-Oriented** and **Strategy** patterns. Content from YAML is validated, processed by a spacing engine, and dispatched to specialized renderers that produce the final `.docx` output.
+## 1. System Overview
+The `reports-formater` project has evolved from a simple YAML-to-DOCX script into a robust **Stateful Dual-Protocol Gateway**. It is designed to automatically generate academic technical reports that strictly adhere to DSTU 3008-2015 standards.
 
-## Core Concepts
+The system accepts input in two formats (**Structured YAML** or **Natural Markdown**) through two communication channels (**Local CLI** or **Model Context Protocol (MCP)** for AI agents), ultimately unifying the data into a single strict Abstract Syntax Tree (AST) compiled by a "Dumb Builder" rendering backend.
 
-### 0. CLI Entry Point (`src/main.py`)
-The command-line interface. Parses arguments, loads YAML, and delegates to `ReportFactory`.
-```
-python -m src.main input.yaml --template template.docx --output report.docx
-```
-Flags: `--config` (custom JSON), `-v` (verbose/debug logging).
+---
 
-### 1. Report Factory (`ReportFactory`)
-The entry point and orchestrator. It is responsible for:
-- Loading configuration (`report_styles.json` + YAML overrides).
-- Loading the base usage template (`.docx`).
-- Initializing services.
-- Managing the high-level build process (Metadata -> Content -> Header/Footer -> Save).
-- Configuring page layout (margins, header/footer distances from `page_setup`).
-- Rendering header/footer with text and/or page numbers using `header_footer` style.
+## 2. The 4-Layer Architecture
 
-### 2. Rendering Service (`RenderingService`)
-The heart of the content generation. It acts as a **Registry** and **Dispatcher**.
-- **Registry:** specific renderers register themselves with the service (e.g., `ParagraphRenderer`, `TableRenderer`).
-- **Dispatch:** When the service encounters a content node (e.g., `type: table`), it delegates processing to the appropriate renderer.
+The system is strictly segregated into four decoupled layers. Lower layers have absolutely no knowledge of the layers above them.
 
-### 3. Renderers & Base Abstractions (`src/renderers/base.py`)
-Each content type has a dedicated renderer class inheriting from `BaseRenderer`.
-- **`BaseRenderer`** — Abstract class. Subclasses implement `node_type` (str) and `render(context, data)`.
-- **`RenderContext`** — Dataclass carrying state through the render tree: `doc`, `container`, `config`, `style_manager`, `resource_path`, `dispatch`. The `container` changes during recursion (document → cell → header).
-- **`ContentContainer`** — Protocol abstracting the write target (Document body, Table cell, Header/Footer).
-- **Single Responsibility:** A renderer knows *only* how to draw its specific element.
-- **Extensible:** Adding a new feature (e.g., "Chart") only requires creating `ChartRenderer` and registering it.
+### Layer 4: Interface & Transport (Entry Points)
+Handles external requests, standard IO, and routing.
+- **`src/main.py`**: The legacy and modern CLI interface. Detects file extensions (`.yaml` vs `.md`) and routes to the appropriate parser.
+- **`src/mcp_server_yaml.py`**: Stdio-based JSON-RPC server exposing tools for LLMs to generate reports via structured YAML chunks.
+- **`src/mcp_server_markdown.py`**: Stdio-based JSON-RPC server exposing tools for LLMs to generate reports via natural Pandoc-style Markdown chunks.
 
-**Available renderers:**
-| Renderer | Node Type | Description |
-|---|---|---|
-| `ParagraphRenderer` | `paragraph` | Text with inline formatting (`**bold**`, `*italic*`, `` `code` ``) |
-| `HeadingRenderer` | `heading` | Headings with Word styles for TOC support |
-| `ListRenderer` | `list` | Bullet, numbered, `alpha_cyrillic`, `alpha_latin` lists |
-| `TableRenderer` | `table` | Grid tables with header row repetition |
-| `ImageRenderer` | `image` | Images with alignment and captions |
-| `CodeBlockRenderer` | `code` | Monospace code blocks with optional caption in repeating header |
-| `FormulaRenderer` | `formula` | LaTeX formulas (matplotlib + system LaTeX fallback) |
-| `BreakRenderer` | `break` | Page breaks, line breaks, section breaks |
+### Layer 3: Transpiler Bridge
+A pure string-processing layer that acts as an adapter for natural Markdown text.
+- **`src/sdk/markdown_parser.py`**: Uses zero external dependencies (only `re`). It parses Markdown into raw dictionary nodes compatible with our AST.
+- **Smart Features:** Implements *Smart Defaults* (automatically applying `align: justify`, `fit_to_page: true`) and *Smart Caption Absorption* (consuming preceding paragraphs as captions for tables and code blocks) to relieve LLMs from formatting burdens.
 
-### 4. Spacing Engine (`SpacingEngine`)
-Middleware that automatically injects valid DSTU 3008-2015 spacing (like inserting `BreakNode` elements) between content elements like Headings, Images, and Code Listings.
+### Layer 2: Stateful Session & Validation
+Manages in-memory document accumulation and safeguards system integrity during interactive AI generation.
+- **`src/config/schemas.py`**: Strict Pydantic V2 models defining the allowed document AST.
+- **`src/sdk/session.py` (`ReportSession`)**: Maintains `self.nodes` in memory.
+- **Atomic Transactions**: Validates chunks using an "All-or-Nothing" approach. If a single node fails Pydantic validation or triggers a `FileNotFoundError`, the entire chunk is rejected, preventing AST corruption.
+- **Crash Recovery**: Automatically writes session state to `draft_report.yaml` after every successful transaction.
 
-### 5. Configuration Architecture
-- **`src/config/models.py`** — Pydantic models (`ReportConfig`, `StylesConfig`, `FontConfig`, `StyleConfig`). Each style can define its own `font_name`.
-- **`src/config/loader.py`** — Loads and merges `report_styles.json` with YAML overrides.
-- **`src/config/schemas.py`** — Pydantic validation schemas for YAML content nodes.
+### Layer 1: Stateless Core Engine
+The legacy rendering engine. It knows nothing about MCP, sessions, or Markdown. It only understands validated Python objects.
+- **`src/report_factory.py`**: Orchestrates document assembly, configures page margins, headers/footers, and invokes services.
+- **`src/services/spacing_engine.py`**: Middleware that injects explicit DSTU-compliant line breaks between nodes (Margin Collapsing).
+- **`src/services/rendering_service.py`**: Dispatches nodes to specific visual renderers based on the Strategy pattern.
 
-**Configuration Hierarchy (Priority):**
-```
-models.py defaults (fallback) < report_styles.json (base) < YAML overrides (highest)
-```
+---
 
-### 6. Utilities
-- **`src/utils/docx_utils.py`** — OXML manipulation helpers: borders, invisible tables, `get_alignment_enum()` (single source of truth for alignment resolution).
-- **`src/utils/formatting.py`** — Inline markdown parser (`**bold**`, `*italic*`, `` `code` ``).
-- **`src/utils/file_io.py`** — `FailSafeSaver` for robust file writing with retry on permission errors.
+## 3. Execution Modes & Data Flow
 
-### 7. Styles & Abstraction
-- **StyleManager:** Abstracts the complexity of Word styles. It performs fuzzy matching to find "Heading 1" even if the template calls it "heading1".
+The system operates in two distinct execution modes depending on the interface used.
 
-### 8. Default Template
-- **`src/DEFAULT_TEMPLATE.docx`** — A minimal `.docx` file used as fallback when no user template is provided. Its purpose is to supply base Word styles (Normal, Heading 1, etc.) so that `StyleManager` can resolve them. It does NOT contain any visible content.
-
-## Data Flow
+### Mode A: Stateful MCP Workflow (AI Agents)
+Used by Cursor, Claude Desktop, or Aider. The document is built sequentially in chunks. `ReportSession` (Layer 2) is heavily utilized.
 
 ```mermaid
 graph TD
-    CLI["main.py (CLI)"] --> Factory[ReportFactory]
+    Client[AI Agent] -- JSON-RPC --> L4[MCP Server]
+    L4 -- "submit_markdown_chunk()" --> L3[Transpiler]
+    L3 -- "Raw Dicts" --> L2[ReportSession]
     
-    YAML[Input YAML] --> Parser[Schema Parser]
-    Parser --> Models[Pydantic Models]
+    sublayer2[Layer 2 Validation]
+    L2 --> Validator[Pydantic Schemas]
+    Validator -- "Invalid" --> Err[JSON Error Diagnostic]
+    Err --> Client
+    Validator -- "Valid" --> AST[(In-Memory AST)]
+    AST --> Backup[(draft_report.yaml)]
+    end
     
-    Factory --> ConfigLoader[ConfigLoader]
-    ConfigLoader --> Config[ReportConfig]
-    Factory --> Template[Load Template / DEFAULT_TEMPLATE]
-    Factory --> Placeholders[PlaceholderService]
-    
-    Models --> Spacing[SpacingEngine]
-    Spacing --> RenderService[RenderingService]
-    
-    RenderService -->|type=paragraph| P_R[ParagraphRenderer]
-    RenderService -->|type=heading| H_R[HeadingRenderer]
-    RenderService -->|type=list| L_R[ListRenderer]
-    RenderService -->|type=table| T_R[TableRenderer]
-    RenderService -->|type=image| I_R[ImageRenderer]
-    RenderService -->|type=code| C_R[CodeBlockRenderer]
-    RenderService -->|type=formula| F_R[FormulaRenderer]
-    RenderService -->|type=break| B_R[BreakRenderer]
-    
-    P_R --> Doc[Word Document]
-    H_R --> Doc
-    L_R --> Doc
-    T_R --> Doc
-    I_R --> Doc
-    C_R --> Doc
-    F_R --> Doc
-    B_R --> Doc
-    
-    Factory -->|Header/Footer| Doc
-    Doc --> Saver[FailSafeSaver]
-    Saver --> File[.docx Output]
+    Client -- "finalize_report()" --> L4
+    L4 --> L2
+    AST -- "Serialize" --> L1[ReportFactory]
+    L1 --> SE[SpacingEngine]
+    SE --> RS[RenderingService]
+    RS --> Word[(Output .docx)]
 ```
 
-## Detailed Components
+### Mode B: Stateless CLI Workflow (Local Users)
+Used via `python -m src.main`. This workflow is instantaneous and **bypasses Layer 2 (`ReportSession`) entirely** because the entire document is provided upfront.
 
-| Component | Responsibility |
-|-----------|----------------|
-| `src/report_factory.py` | High-level orchestration, header/footer rendering, page layout. |
-| `src/services/rendering_service.py` | Dispatching nodes to renderers. |
-| `src/services/spacing_engine.py` | Injecting empty break lines automatically between nodes per DSTU 3008-2015. |
-| `src/services/style_manager.py` | Resolving Word style names robustly (fuzzy matching). |
-| `src/services/placeholder_service.py` | Replacing `{{KEY}}` placeholders in templates. |
-| `src/renderers/*` | Individual logic for drawing elements. |
-| `src/config/models.py` | Pydantic models for type-safe configuration (`ReportConfig`, `StyleConfig`). |
-| `src/config/loader.py` | Loading and merging JSON config with YAML overrides. |
-| `src/config/schemas.py` | Data validation schemas for YAML content nodes. |
-| `src/utils/docx_utils.py` | OXML helpers: borders, alignment (`get_alignment_enum`), table optimization. |
-| `src/utils/formatting.py` | Inline markdown parsing for runs. |
-| `src/utils/file_io.py` | Fail-safe file saving with retry. |
+```mermaid
+graph TD
+    User[Local User] -- "input.md" --> L4[CLI main.py]
+    L4 -- "Extract Front-Matter" --> Meta[(Metadata)]
+    L4 -- "Markdown Body" --> L3[Transpiler]
+    L3 -- "List[Dicts]" --> AST[(Unified Dict Payload)]
+    Meta --> AST
+    
+    AST --> L1[ReportFactory]
+    L1 --> Validator[Pydantic Schemas]
+    Validator --> SE[SpacingEngine]
+    SE --> RS[RenderingService]
+    RS --> Word[(Output .docx)]
+```
 
-## Design Principles
-1.  **Isolation:** A bug in table rendering should not break paragraph rendering.
-2.  **Type Safety:** We use Python type hints and Pydantic everywhere.
-3.  **Fail-Safe:** File IO operations retry automatically on permission errors.
-4.  **Single Source of Truth:** Alignment handled by `get_alignment_enum()`, fonts resolved via `style_config.font_name or config.fonts.default_name`.
+---
+
+## 4. Configuration & Styling Hierarchy
+
+Visual styling is entirely abstracted away from the code. The system uses a strict priority-based cascading configuration:
+
+| Priority | Source | Description |
+|---|---|---|
+| **1 (Lowest)** | `src/config/models.py` | Hardcoded Pydantic defaults (fallback if JSON is missing). |
+| **2** | `src/report_styles.json` | The core visual identity. Defines fonts, line spacing, margins, and indents per node style. |
+| **3 (Highest)** | `metadata` / Front-Matter | Runtime YAML overrides (e.g., `page_numbering`, `header_text`). |
+
+*Note on Templates:* The base `.docx` template (`--template`) provides the physical XML foundation and title page layout. The code applies margin and font overrides on top of it.
+
+---
+
+## 5. Core Design Principles
+
+1. **The "Dumb Builder" (Composition over Complexity):** Renderers are the "hands", not the "brains". They do not guess semantics or analyze text. If `align` is not specified, they fall back to the config default. They just draw.
+2. **Zero-Trust Validation:** Never trust LLM or user inputs. Validate every node through Pydantic before allowing it to mutate the state buffer.
+3. **Smart Defaults (Layer 3 Isolation):** Any "guessing" or "syntactic sugar" (like assuming a paragraph before a table is its caption) happens strictly in the Markdown Transpiler. The Core Engine remains pure and deterministic.
+4. **Do Not Break Userspace:** The system must always maintain backward compatibility. Monolithic YAML files written years ago must still compile perfectly today via the CLI.
+
+---
+
+## 6. Component Registry
+
+| Component | Responsibility / Notes |
+|-----------|-------------------------|
+| `src/config/loader.py` | Deep merges JSON configs and normalizes YAML shorthand properties. |
+| `src/config/schemas.py` | Single source of truth for allowed AST structures. |
+| `src/renderers/*` | Isolated drawing logic. E.g., `image_renderer.py` handles LibreOffice bug fixes for inline shapes. |
+| `src/services/placeholder_service.py` | Uses a **Cascade Strategy** to replace `{{KEY}}` tags in templates (first trying run-level to preserve formatting, falling back to paragraph-level). |
+| `src/services/style_manager.py` | Uses fuzzy matching to robustly map abstract style names (e.g., "heading1") to internal MS Word XML style IDs. |
+| `src/utils/docx_utils.py` | OXML manipulation helpers. Creates invisible borderless tables to anchor images and formulas side-by-side with captions. |
+| `src/utils/file_io.py` | `FailSafeSaver` implements automatic retry and timestamped renaming if the target `.docx` is locked by another program. |
